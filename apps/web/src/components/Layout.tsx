@@ -18,11 +18,11 @@ export default function Layout() {
   }, [isDarkMode]);
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: "var(--bg)" }}>
+    <div className="min-h-screen flex">
       <Sidebar />
 
-      {/* Main Content Area — offset by sidebar width */}
-      <div className="flex-1 flex flex-col min-h-screen" style={{ marginLeft: "260px" }}>
+      {/* Main Content Area — responsive offset by sidebar width */}
+      <div className="flex-1 flex flex-col min-h-screen ml-0 md:ml-[260px]">
         <Topbar />
 
         <main className="flex-1 p-8">

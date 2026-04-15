@@ -14,7 +14,7 @@ import Settings from './pages/Settings';
 const queryClient = new QueryClient();
 
 const Placeholder = ({ title }: { title: string }) => (
-  <div className="card-premium p-12 flex flex-col items-center justify-center text-center space-y-4">
+  <div className="card p-12 flex flex-col items-center justify-center text-center space-y-4">
     <h2 className="text-2xl font-black text-slate-900 dark:text-white">{title}</h2>
     <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Sección en Desarrollo</p>
   </div>

@@ -38,30 +38,16 @@ export default function Sidebar() {
   return (
     <aside className="sidebar hidden md:flex">
       {/* Logo */}
-      <div style={{ padding: '28px 20px 20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            width: '36px', height: '36px',
-            background: 'linear-gradient(135deg, #10b981, #059669)',
-            borderRadius: '10px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(16,185,129,0.35)',
-            flexShrink: 0,
-          }}>
-            <Stethoscope size={18} color="white" />
+      <div className="pt-7 px-5 pb-5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 bg-gradient-to-br from-primary to-primary-dark rounded-[10px] flex items-center justify-center shadow-lg shadow-primary/35 shrink-0">
+            <Stethoscope size={18} className="text-white" />
           </div>
           <div>
-            <span style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '1rem',
-              fontWeight: 700,
-              color: '#fff',
-              letterSpacing: '-0.02em',
-              lineHeight: 1,
-            }}>
+            <span className="font-display text-base font-bold text-text-primary tracking-tight leading-none uppercase">
               OdontoMax
             </span>
-            <p style={{ fontSize: '0.65rem', color: 'rgba(148,163,184,0.6)', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <p className="text-[0.65rem] text-text-tertiary mt-0.5 uppercase tracking-widest">
               Professional OS
             </p>
           </div>
@@ -69,11 +55,11 @@ export default function Sidebar() {
       </div>
 
       {/* Divider */}
-      <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '0 20px' }} />
+      <div className="h-px bg-sidebar-border mx-5" />
 
       {/* Navigation */}
-      <nav style={{ flex: 1, padding: '16px 12px', overflowY: 'auto' }}>
-        <p className="sidebar-section-label" style={{ marginBottom: '8px' }}>Principal</p>
+      <nav className="flex-1 px-3 py-4 overflow-y-auto">
+        <p className="sidebar-section-label mb-2">Principal</p>
 
         {navItems.map((item, i) => (
           <motion.div
@@ -85,8 +71,7 @@ export default function Sidebar() {
             <NavLink
               to={item.path}
               end={item.path === '/'}
-              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-              style={{ marginBottom: '2px' }}
+              className={({ isActive }) => `nav-link mb-0.5${isActive ? ' active' : ''}`}
             >
               <item.icon size={18} className="nav-icon" strokeWidth={1.75} />
               <span>{item.label}</span>
@@ -96,59 +81,36 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="p-3 border-t border-sidebar-border">
         {/* Theme toggle */}
         <button
           onClick={toggleDarkMode}
-          style={{
-            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '12px 16px', borderRadius: '12px',
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            cursor: 'pointer', marginBottom: '12px', transition: 'all 0.15s',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
-          }}
+          className="w-full flex items-center justify-between p-3 rounded-xl bg-bg-subtle border border-sidebar-border cursor-pointer mb-3 transition-all hover:bg-bg-elevated"
         >
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'rgba(148,163,184,0.8)' }}>
+          <span className="text-[0.75rem] font-semibold text-text-secondary">
             {isDarkMode ? 'Modo claro' : 'Modo oscuro'}
           </span>
           {isDarkMode
-            ? <Sun size={15} color="#fbbf24" />
-            : <Moon size={15} color="#94a3b8" />
+            ? <Sun size={15} className="text-amber-500" />
+            : <Moon size={15} className="text-text-tertiary" />
           }
         </button>
 
         {/* User */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '12px',
-          padding: '12px', borderRadius: '14px',
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.05)',
-          marginTop: '4px'
-        }}>
-          <div style={{
-            width: '38px', height: '38px', borderRadius: '10px',
-            background: user?.professionalProfile?.color ?? '#10b981',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 800, fontSize: '0.8rem', flexShrink: 0,
-            boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
-          }}>
+        <div className="flex items-center gap-3 p-3 rounded-2xl bg-bg-subtle border border-sidebar-border mt-1">
+          <div 
+            className="w-9 h-9 rounded-[10px] flex items-center justify-center text-white font-extrabold text-[0.8rem] shrink-0 shadow-lg shadow-black/10"
+            style={{ background: user?.professionalProfile?.color ?? 'var(--color-primary)' }}
+          >
             {initials}
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: '0.825rem', fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div className="flex-1 min-w-0">
+            <p className="text-[0.825rem] font-bold text-text-primary truncate">
               Dr. {user?.lastName || 'Doctor'}
             </p>
             <button
               onClick={handleLogout}
-              style={{ fontSize: '0.7rem', color: 'rgba(148,163,184,0.7)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '1px' }}
+              className="text-[0.7rem] text-text-tertiary bg-transparent border-none p-0 cursor-pointer flex items-center gap-1 mt-0.5 hover:text-red-500 transition-colors"
             >
               <LogOut size={11} />
               Cerrar sesión
