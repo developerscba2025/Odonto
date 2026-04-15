@@ -26,8 +26,14 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
       { expiresIn: '1d' }
     );
 
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
     res.json({
-      token,
       user: {
         id: user.id,
         email: user.email,
@@ -74,8 +80,14 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
       { expiresIn: '1d' }
     );
 
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
     res.status(201).json({
-      token,
       user: {
         id: user.id,
         email: user.email,

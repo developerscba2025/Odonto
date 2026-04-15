@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "./Sidebar";
@@ -8,6 +8,7 @@ import { useUIStore } from "../stores/uiStore";
 export default function Layout() {
   const isDarkMode = useUIStore((s) => s.isDarkMode);
   const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -17,13 +18,15 @@ export default function Layout() {
     }
   }, [isDarkMode]);
 
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
   return (
-    <div className="min-h-screen flex">
-      <Sidebar />
+    <div className="min-h-screen flex bg-bg">
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Main Content Area — responsive offset by sidebar width */}
       <div className="flex-1 flex flex-col min-h-screen ml-0 md:ml-[260px]">
-        <Topbar />
+        <Topbar onMenuClick={toggleSidebar} />
 
         <main className="flex-1 p-8">
           <AnimatePresence mode="wait">

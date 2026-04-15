@@ -6,8 +6,6 @@ import api from "../lib/api";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { motion } from "framer-motion";
-import { cn } from "../lib/utils";
-
 import NewPatientModal from "../components/NewPatientModal";
 
 const fadeUp = {
@@ -28,19 +26,19 @@ export default function Patients() {
   });
 
   return (
-    <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+    <div className="max-w-[1200px] mx-auto">
       {/* Page Header */}
       <motion.div
         variants={fadeUp}
         initial="hidden"
         animate="visible"
-        style={{ marginBottom: "32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+        className="mb-8 flex items-start sm:items-center justify-between gap-4 flex-wrap"
       >
         <div>
           <h1 className="page-title">Pacientes</h1>
           <p className="page-subtitle">Gestiona la base de datos de pacientes y su historial</p>
         </div>
-        <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
+        <button className="btn-primary shrink-0" onClick={() => setIsModalOpen(true)}>
           <UserPlus size={16} />
           Nuevo paciente
         </button>
@@ -51,45 +49,23 @@ export default function Patients() {
         variants={fadeUp}
         initial="hidden"
         animate="visible"
-        style={{ transitionDelay: "0.1s" }}
-        className="card glass"
-        style={{ padding: "20px 24px", marginBottom: "24px", display: "flex", gap: "16px", alignItems: "center" }}
+        className="card glass p-5 mb-5 flex gap-3 items-center"
       >
-        <div style={{ position: 'relative', flex: 1 }}>
+        <div className="relative flex-1">
           <Search
-            size={16}
-            color="var(--text-tertiary)"
-            style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+            size={15}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none"
           />
           <input
             type="text"
             placeholder="Buscar por nombre, apellido o DNI..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              width: '100%',
-              background: 'var(--bg-subtle)',
-              border: '1.5px solid var(--border)',
-              borderRadius: '10px',
-              padding: '10px 16px 10px 42px',
-              fontSize: '0.875rem',
-              color: 'var(--text-primary)',
-              outline: 'none',
-              fontFamily: '"Inter", sans-serif',
-              transition: 'all 0.15s',
-            }}
-            onFocus={e => {
-              e.currentTarget.style.borderColor = '#10b981';
-              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)';
-            }}
-            onBlur={e => {
-              e.currentTarget.style.borderColor = 'var(--border)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+            className="input-field pl-10"
           />
         </div>
-        <button className="btn-secondary">
-          <Filter size={16} />
+        <button className="btn-secondary shrink-0">
+          <Filter size={15} />
           Filtrar
         </button>
       </motion.div>
@@ -99,137 +75,132 @@ export default function Patients() {
         variants={fadeUp}
         initial="hidden"
         animate="visible"
-        style={{ transitionDelay: "0.2s" }}
-        className="card glass"
+        className="card glass overflow-hidden"
       >
-        <div style={{ overflowX: "auto" }}>
+        <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
                 <th>Paciente</th>
-                <th>DNI / Identificación</th>
-                <th>Cobertura</th>
+                <th>DNI</th>
+                <th>Obra Social</th>
                 <th>Teléfono</th>
                 <th>Última visita</th>
-                <th style={{ textAlign: "right" }}>Acciones</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "64px 0" }}>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-                       <Loader2 size={32} color="#10b981" style={{ animation: "spin 1s linear infinite" }} />
-                       <p style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-tertiary)" }}>Cargando pacientes...</p>
+                  <td colSpan={6} className="text-center py-16">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 size={32} className="text-primary animate-spin" />
+                      <p className="text-sm font-semibold text-text-tertiary">Cargando pacientes...</p>
                     </div>
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "48px 0", color: "#ef4444", fontWeight: 600 }}>
-                    Error al cargar los pacientes.
+                  <td colSpan={6} className="text-center py-12 text-red-500 font-semibold text-sm">
+                    Error al cargar los pacientes. Verificá que el servidor esté activo.
                   </td>
                 </tr>
-              ) : patients?.length === 0 ? (
+              ) : !patients || patients.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "80px 0" }}>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
-                       <Search size={48} color="var(--border)" />
-                       <p style={{ fontSize: "0.875rem", fontWeight: 500, color: "var(--text-secondary)" }}>
-                         No se encontraron pacientes que coincidan con la búsqueda
-                       </p>
+                  <td colSpan={6} className="text-center py-20">
+                    <div className="flex flex-col items-center gap-4">
+                      <Search size={44} className="text-border" />
+                      <div className="text-center">
+                        <p className="text-sm font-semibold text-text-primary mb-1">
+                          {searchTerm ? "Sin resultados" : "No hay pacientes aún"}
+                        </p>
+                        <p className="text-xs text-text-tertiary">
+                          {searchTerm
+                            ? "Probá con otro nombre, apellido o DNI"
+                            : "Empezá agregando tu primer paciente al sistema"}
+                        </p>
+                      </div>
+                      {!searchTerm && (
+                        <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
+                          <UserPlus size={15} />
+                          Agregar primer paciente
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
-              ) : (patients?.map((p: any) => {
-                const latestAppt = p.appointments?.[0];
-                const coverage = p.coverages?.[0]?.insurancePlan;
-                const initials = `${p.name[0]}${p.lastName[0]}`.toUpperCase();
+              ) : (
+                patients.map((p: any) => {
+                  const latestAppt = p.appointments?.[0];
+                  const coverage = p.coverages?.[0]?.insurancePlan;
+                  const initials = `${p.name?.[0] || "?"}${p.lastName?.[0] || "?"}`.toUpperCase();
 
-                return (
-                  <tr key={p.id}>
-                    <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        <div style={{
-                          width: "36px", height: "36px", borderRadius: "8px",
-                          background: "var(--bg-subtle)",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          color: "var(--text-secondary)", fontWeight: 700, fontSize: "0.75rem",
-                          border: "1px solid var(--border)",
-                        }}>
-                          {initials}
+                  return (
+                    <tr key={p.id}>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-bg-subtle border border-border flex items-center justify-center text-text-secondary font-extrabold text-xs shrink-0 select-none">
+                            {initials}
+                          </div>
+                          <Link
+                            to={`/pacientes/${p.id}`}
+                            className="font-semibold text-text-primary text-sm no-underline hover:text-primary transition-colors duration-150"
+                          >
+                            {p.lastName}, {p.name}
+                          </Link>
                         </div>
-                        <Link
-                          to={`/pacientes/${p.id}`}
-                          style={{ fontWeight: 700, color: "var(--text-primary)", textDecoration: "none", fontSize: "0.875rem" }}
-                          onMouseEnter={e => e.currentTarget.style.color = "#10b981"}
-                          onMouseLeave={e => e.currentTarget.style.color = "var(--text-primary)"}
-                        >
-                          {p.lastName}, {p.name}
-                        </Link>
-                      </div>
-                    </td>
-                    <td>
-                      <span style={{ fontWeight: 600, color: "var(--text-secondary)", fontSize: "0.875rem" }}>{p.dni}</span>
-                    </td>
-                    <td>
-                      {coverage ? (
-                        <span className="badge" style={{ background: "rgba(16,185,129,0.1)", color: "#10b981", fontSize: "0.7rem" }}>
-                          {coverage.provider.name}
+                      </td>
+                      <td>
+                        <span className="font-mono text-sm text-text-secondary tracking-wide">{p.dni}</span>
+                      </td>
+                      <td>
+                        {coverage ? (
+                          <span className="badge bg-primary/10 text-primary text-[0.7rem] font-semibold">
+                            {coverage.provider.name}
+                          </span>
+                        ) : (
+                          <span className="text-[0.7rem] font-semibold text-text-tertiary uppercase tracking-wider">
+                            Particular
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <span className="text-sm text-text-secondary">{p.phone}</span>
+                      </td>
+                      <td>
+                        <span className="text-sm text-text-secondary font-medium">
+                          {latestAppt
+                            ? format(new Date(latestAppt.date), "dd MMM yyyy", { locale: es })
+                            : "—"}
                         </span>
-                      ) : (
-                        <span style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Particular</span>
-                      )}
-                    </td>
-                    <td>
-                      <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontWeight: 500 }}>{p.phone}</span>
-                    </td>
-                    <td>
-                      <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontWeight: 600 }}>
-                        {latestAppt ? format(new Date(latestAppt.date), "dd/MM/yyyy", { locale: es }) : '—'}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: "right" }}>
-                      <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-                        <Link
-                          to={`/pacientes/${p.id}`}
-                          style={{
-                            width: "32px", height: "32px", borderRadius: "8px",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            color: "var(--text-tertiary)", transition: "all 0.15s",
-                            background: "transparent",
-                          }}
-                          onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-subtle)"; e.currentTarget.style.color = "#10b981" }}
-                          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-tertiary)" }}
-                        >
-                          <Eye size={18} />
-                        </Link>
-                        <button
-                          style={{
-                            width: "32px", height: "32px", borderRadius: "8px",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            color: "var(--text-tertiary)", transition: "all 0.15s",
-                            background: "transparent", border: "none", cursor: "pointer",
-                          }}
-                          onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-subtle)"; e.currentTarget.style.color = "#10b981" }}
-                          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-tertiary)" }}
-                        >
-                          <Calendar size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              }))}
+                      </td>
+                      <td className="text-right">
+                        <div className="flex justify-end gap-1.5">
+                          <Link
+                            to={`/pacientes/${p.id}`}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-bg-subtle hover:text-primary transition-all duration-150 no-underline"
+                            title="Ver detalle"
+                          >
+                            <Eye size={15} />
+                          </Link>
+                          <button
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-bg-subtle hover:text-primary transition-all duration-150 bg-transparent border-none cursor-pointer"
+                            title="Agendar turno"
+                          >
+                            <Calendar size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
       </motion.div>
 
-      <NewPatientModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
+      <NewPatientModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }

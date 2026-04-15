@@ -1,26 +1,29 @@
 import axios from 'axios';
+import { toast } from 'sonner';
 import { useAuthStore } from '../stores/authStore';
 
 const api = axios.create({
   baseURL: 'http://localhost:3000/api',
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 });
 
-// Attach JWT token to every request
-api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
-
-// Auto-logout on 401
+// Auto-logout on 401 and toast on other errors
 api.interceptors.response.use(
   (res) => res,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+
+    if (status === 401) {
       useAuthStore.getState().logout();
-      window.location.href = '/login';
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    } else {
+      const message = error.response?.data?.error || 'Ocurrió un error inesperado';
+      toast.error(message);
     }
+
     return Promise.reject(error);
   }
 );

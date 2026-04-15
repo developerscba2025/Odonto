@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes.js';
 import patientRoutes from './routes/patient.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
@@ -8,11 +9,13 @@ import appointmentRoutes from './routes/appointment.routes.js';
 import insuranceRoutes from './routes/insurance.routes.js';
 import absenceRoutes from './routes/absence.routes.js';
 import clinicalRoutes from './routes/clinical.routes.js';
+import prisma from './prisma.js';
 
 const app: Express = express();
 
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -33,6 +36,19 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 const PORT = process.env.PORT ?? 3000;
-app.listen(PORT, () => console.log(`🦷 DentalFlow API running on port ${PORT}`));
+const server = app.listen(PORT, () => console.log(`🦷 DentalFlow API running on port ${PORT}`));
+
+// Graceful shutdown
+const shutdown = async () => {
+  console.log('Stopping server...');
+  server.close(async () => {
+    console.log('Server stopped. Disconnecting Prisma...');
+    await prisma.$disconnect();
+    process.exit(0);
+  });
+};
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
 export default app;

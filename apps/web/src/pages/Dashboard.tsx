@@ -9,12 +9,13 @@ import {
   Loader2,
   TrendingUp,
   ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import api from "../lib/api";
 import { PRACTICE_META, STATUS_META } from "@dentalflow/shared";
 import { cn } from "../lib/utils";
-import NewAppointmentModal from "../components/NewAppointmentModal";
+import AppointmentModal from "../components/AppointmentModal";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -43,7 +44,7 @@ export default function Dashboard() {
       change: "+12%",
       positive: true,
       accent: "#10b981",
-      bg: "rgba(16,185,129,0.08)",
+      bg: "bg-emerald-500/10",
     },
     {
       icon: Users,
@@ -52,7 +53,7 @@ export default function Dashboard() {
       change: "+8%",
       positive: true,
       accent: "#6366f1",
-      bg: "rgba(99,102,241,0.08)",
+      bg: "bg-indigo-500/10",
     },
     {
       icon: CalendarClock,
@@ -61,7 +62,7 @@ export default function Dashboard() {
       change: "−3%",
       positive: false,
       accent: "#f59e0b",
-      bg: "rgba(245,158,11,0.08)",
+      bg: "bg-amber-500/10",
     },
     {
       icon: CalendarX,
@@ -70,32 +71,32 @@ export default function Dashboard() {
       change: "+2%",
       positive: false,
       accent: "#ef4444",
-      bg: "rgba(239,68,68,0.08)",
+      bg: "bg-red-500/10",
     },
   ];
 
   return (
-    <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+    <div className="max-w-[1200px] mx-auto">
       {/* Page Header */}
       <motion.div
         custom={0}
         variants={fadeUp}
         initial="hidden"
         animate="visible"
-        style={{ marginBottom: "32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+        className="mb-8 flex items-start sm:items-center justify-between gap-4 flex-wrap"
       >
         <div>
           <h1 className="page-title">Vista General</h1>
           <p className="page-subtitle">Resumen del día en tu clínica</p>
         </div>
-        <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
+        <button className="btn-primary shrink-0" onClick={() => setIsModalOpen(true)}>
           <Plus size={16} />
           Nueva cita
         </button>
       </motion.div>
 
       {/* Metric Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", marginBottom: "24px" }}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {metrics.map((m, i) => (
           <motion.div
             key={i}
@@ -103,70 +104,57 @@ export default function Dashboard() {
             variants={fadeUp}
             initial="hidden"
             animate="visible"
-            className="stat-card glass"
+            className="card glass p-5"
           >
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "16px" }}>
-              <div style={{
-                width: "40px", height: "40px", borderRadius: "10px",
-                background: m.bg,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
+            <div className="flex items-start justify-between mb-4">
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", m.bg)}>
                 <m.icon size={20} color={m.accent} strokeWidth={1.75} />
               </div>
-              <span style={{
-                fontSize: "0.7rem", fontWeight: 700,
-                color: m.positive ? "#10b981" : "#ef4444",
-                background: m.positive ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
-                padding: "3px 8px", borderRadius: "20px",
-                display: "flex", alignItems: "center", gap: "2px",
-              }}>
-                <ArrowUpRight size={11} style={{ transform: m.positive ? "none" : "rotate(90deg)" }} />
+              <span
+                className={cn(
+                  "text-[0.68rem] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5",
+                  m.positive
+                    ? "text-emerald-600 bg-emerald-500/10"
+                    : "text-red-500 bg-red-500/10"
+                )}
+              >
+                {m.positive ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
                 {m.change}
               </span>
             </div>
-            <p style={{ fontSize: "2rem", fontWeight: 700, fontFamily: "var(--font-display)", color: "var(--text-primary)", lineHeight: 1, marginBottom: "6px" }}>
-              {isLoading ? <Loader2 size={24} style={{ animation: "spin 1s linear infinite" }} /> : m.value}
+            <p className="text-[2rem] font-bold text-text-primary leading-none mb-1.5 font-display">
+              {isLoading ? (
+                <Loader2 size={22} className="text-text-tertiary animate-spin" />
+              ) : (
+                m.value
+              )}
             </p>
-            <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)", fontWeight: 500 }}>
-              {m.label}
-            </p>
+            <p className="text-xs text-text-secondary font-medium">{m.label}</p>
           </motion.div>
         ))}
       </div>
 
       {/* Main Content Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "20px" }}>
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-5">
         {/* Agenda Table */}
         <motion.div
           custom={5}
           variants={fadeUp}
           initial="hidden"
           animate="visible"
-          className="card glass"
+          className="card glass overflow-hidden"
         >
-          <div style={{
-            padding: "20px 24px",
-            borderBottom: "1px solid var(--border)",
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-          }}>
+          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
             <div>
-              <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-display)" }}>
-                Agenda del día
-              </h2>
-              <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "2px" }}>
-                Turnos programados para hoy
-              </p>
+              <h2 className="text-[0.95rem] font-bold text-text-primary font-display">Agenda del día</h2>
+              <p className="text-xs text-text-secondary mt-0.5">Turnos programados para hoy</p>
             </div>
-            <span style={{
-              fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase",
-              letterSpacing: "0.06em", padding: "4px 10px", borderRadius: "20px",
-              background: "rgba(16,185,129,0.1)", color: "#059669",
-            }}>
+            <span className="text-[0.65rem] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600">
               En curso
             </span>
           </div>
 
-          <div style={{ overflowX: "auto" }}>
+          <div className="overflow-x-auto">
             <table className="data-table">
               <thead>
                 <tr>
@@ -180,48 +168,49 @@ export default function Dashboard() {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: "center", padding: "48px 0" }}>
-                      <Loader2 size={28} color="#10b981" style={{ animation: "spin 1s linear infinite", margin: "0 auto" }} />
+                    <td colSpan={5} className="text-center py-12">
+                      <Loader2 size={28} className="text-primary animate-spin mx-auto" />
                     </td>
                   </tr>
                 ) : !data?.agenda || data.agenda.length === 0 ? (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: "center", padding: "64px 0" }}>
-                      <CalendarClock size={40} color="var(--text-tertiary)" style={{ margin: "0 auto 12px" }} />
-                      <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", fontWeight: 500 }}>
-                        Sin turnos agendados para hoy
-                      </p>
+                    <td colSpan={5} className="text-center py-16">
+                      <CalendarClock size={40} className="text-border mx-auto mb-3" />
+                      <p className="text-sm font-medium text-text-secondary">Sin turnos agendados para hoy</p>
                     </td>
                   </tr>
                 ) : (
                   data.agenda.map((appt: any) => {
-                    const practice = PRACTICE_META[appt.practice as keyof typeof PRACTICE_META] || PRACTICE_META.OTHER;
-                    const status = STATUS_META[appt.status.toUpperCase() as keyof typeof STATUS_META] || STATUS_META.PENDING;
+                    const practice =
+                      PRACTICE_META[appt.practice as keyof typeof PRACTICE_META] || PRACTICE_META.OTHER;
+                    const status =
+                      STATUS_META[appt.status.toUpperCase() as keyof typeof STATUS_META] || STATUS_META.PENDING;
                     return (
                       <tr key={appt.id}>
                         <td>
-                          <span style={{ fontWeight: 700, fontFamily: "var(--font-display)", fontSize: "0.9rem", color: "var(--text-primary)" }}>
+                          <span className="font-bold font-display text-[0.9rem] text-text-primary">
                             {appt.time}
                           </span>
                         </td>
                         <td>
-                          <p style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.875rem" }}>{appt.patient}</p>
+                          <p className="font-semibold text-text-primary text-sm">{appt.patient}</p>
                         </td>
                         <td>
-                          <span className={cn("badge", practice.bg, practice.color)} style={{ fontSize: "0.7rem" }}>
+                          <span className={cn("badge text-[0.7rem]", practice.bg, practice.color)}>
                             {practice.label}
                           </span>
                         </td>
                         <td>
-                          <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Dr. {appt.professional}</p>
+                          <p className="text-[0.8rem] text-text-secondary">Dr. {appt.professional}</p>
                         </td>
                         <td>
-                          <span className={cn("badge", status.color)} style={{
-                            background: "transparent",
-                            display: "flex", alignItems: "center", gap: "5px",
-                            fontSize: "0.78rem", fontWeight: 600,
-                          }}>
-                            <span className={cn("w-1.5 h-1.5 rounded-full", status.dot)} style={{ width: "6px", height: "6px", borderRadius: "50%", background: "currentColor", flexShrink: 0 }} />
+                          <span
+                            className={cn(
+                              "flex items-center gap-1.5 text-[0.78rem] font-semibold",
+                              status.color
+                            )}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80 shrink-0" />
                             {status.label}
                           </span>
                         </td>
@@ -235,35 +224,40 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Right Column */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {/* Quick Stats */}
-          <motion.div custom={6} variants={fadeUp} initial="hidden" animate="visible" className="card glass" style={{ padding: "20px 24px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
-              <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(99,102,241,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <TrendingUp size={16} color="#6366f1" />
+        <div className="flex flex-col gap-4">
+          {/* Performance Card */}
+          <motion.div
+            custom={6}
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            className="card glass p-5"
+          >
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                <TrendingUp size={15} color="#6366f1" />
               </div>
-              <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-display)" }}>
-                Rendimiento
-              </h3>
+              <h3 className="text-sm font-bold text-text-primary font-display">Rendimiento</h3>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <div className="flex flex-col gap-4">
               {[
                 { label: "Ocupación", value: 84, color: "#10b981" },
                 { label: "Satisfacción", value: 97, color: "#6366f1" },
                 { label: "Puntualidad", value: 76, color: "#f59e0b" },
               ].map((stat) => (
                 <div key={stat.label}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                    <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)", fontWeight: 500 }}>{stat.label}</span>
-                    <span style={{ fontSize: "0.78rem", color: "var(--text-primary)", fontWeight: 700 }}>{stat.value}%</span>
+                  <div className="flex justify-between mb-1.5">
+                    <span className="text-xs text-text-secondary font-medium">{stat.label}</span>
+                    <span className="text-xs text-text-primary font-bold">{stat.value}%</span>
                   </div>
-                  <div style={{ height: "6px", background: "var(--bg-subtle)", borderRadius: "99px", overflow: "hidden" }}>
+                  <div className="h-1.5 bg-bg-subtle rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${stat.value}%` }}
-                      transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-                      style={{ height: "100%", background: stat.color, borderRadius: "99px" }}
+                      transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
+                      style={{ background: stat.color }}
+                      className="h-full rounded-full"
                     />
                   </div>
                 </div>
@@ -272,25 +266,33 @@ export default function Dashboard() {
           </motion.div>
 
           {/* Alert Card */}
-          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="card glass" style={{ padding: "24px", borderRadius: "24px" }}>
-            <div style={{
-              width: "100%", padding: "18px", borderRadius: "16px",
-              background: "rgba(245,158,11,0.08)",
-              border: "1px solid rgba(245,158,11,0.15)",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-                <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#f59e0b", flexShrink: 0, animation: "pulse-dot 2s infinite" }} />
-                <p style={{ fontSize: "0.85rem", fontWeight: 800, color: "#d97706", textTransform: "uppercase", letterSpacing: "0.02em" }}>Recordatorios activos</p>
+          <motion.div
+            custom={7}
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            className="card glass p-5"
+          >
+            <div className="p-4 rounded-xl bg-amber-500/8 border border-amber-500/15">
+              <div className="flex items-center gap-2.5 mb-2.5">
+                <span
+                  className="w-2 h-2 rounded-full bg-amber-500 shrink-0"
+                  style={{ animation: "pulse-dot 2s infinite" }}
+                />
+                <p className="text-xs font-extrabold text-amber-600 uppercase tracking-wider">
+                  Recordatorios activos
+                </p>
               </div>
-              <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.6, fontWeight: 500 }}>
-                Los recordatorios de WhatsApp se enviarán automáticamente 24hs antes de cada cita para reducir ausentismo.
+              <p className="text-[0.78rem] text-text-secondary leading-relaxed">
+                Los recordatorios de WhatsApp se enviarán automáticamente 24hs antes de cada cita para
+                reducir ausentismo.
               </p>
             </div>
           </motion.div>
         </div>
       </div>
 
-      <NewAppointmentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <AppointmentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Search, Bell } from "lucide-react";
+import { Search, Bell, Menu } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useLocation } from "react-router-dom";
@@ -11,13 +11,25 @@ const routeTitles: Record<string, string> = {
   "/configuracion": "Configuración",
 };
 
-export default function Topbar() {
+interface TopbarProps {
+  onMenuClick: () => void;
+}
+
+export default function Topbar({ onMenuClick }: TopbarProps) {
   const location = useLocation();
   const title = routeTitles[location.pathname] ?? "Detalle";
   const today = format(new Date(), "EEEE, d 'de' MMMM", { locale: es });
 
   return (
     <header className="topbar glass">
+      {/* Mobile menu button */}
+      <button 
+        onClick={onMenuClick}
+        className="md:hidden w-9 h-9 rounded-lg bg-bg-subtle border border-border flex items-center justify-center cursor-pointer transition-colors hover:bg-bg-elevated mr-2"
+      >
+        <Menu size={20} className="text-text-primary" />
+      </button>
+
       {/* Page title */}
       <div className="flex-1">
         <h1 className="text-lg font-bold font-display text-text-primary tracking-tight">
@@ -49,7 +61,7 @@ export default function Topbar() {
           </p>
         </div>
 
-        <button className="w-9 h-9 rounded-lg bg-bg-subtle border border-border flex items-center justify-center cursor-pointer relative transition-colors hover:bg-bg-elevated shrink-0">
+        <button className="btn-secondary w-9 h-9 !padding-0 flex items-center justify-center relative shrink-0">
           <Bell size={16} className="text-text-secondary" />
           <span className="absolute top-2 right-2 w-[7px] h-[7px] rounded-full bg-red-500 border-1.5 border-bg-elevated" />
         </button>

@@ -55,6 +55,9 @@ model Patient {
   attachments     PatientAttachment[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+
+  @@index([name])
+  @@index([lastName])
 }
 
 model InsuranceProvider {
@@ -92,7 +95,7 @@ model Appointment {
   practiceType   String              // PracticeType: GENERAL_CONSULTATION, etc.
   
   patientId      String
-  patient        Patient             @relation(fields: [patientId], references: [id])
+  patient        Patient             @relation(fields: [patientId], references: [id], onDelete: Cascade)
   
   professionalId String
   professional   User                @relation("ProfessionalAppointments", fields: [professionalId], references: [id])
@@ -101,6 +104,9 @@ model Appointment {
   
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
+
+  @@index([date])
+  @@index([professionalId, date])
 }
 
 model ActivityLog {
