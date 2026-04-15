@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Clinic {
+  id        String   @id @default(uuid())
+  name      String   @default("DentalFlow Clinic")
+  address   String?
+  phone     String?
+  timezone  String   @default("America/Argentina/Buenos_Aires")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  password            String
+  role                String               @default("PROFESSIONAL") // Role: ADMIN, PROFESSIONAL
+  name                String
+  lastName            String
+  professionalProfile ProfessionalProfile?
+  appointments        Appointment[]        @relation("ProfessionalAppointments")
+  activityLogs        ActivityLog[]
+  absences            ProfessionalAbsence[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+}
+
+model ProfessionalProfile {
+  id        String   @id @default(uuid())
+  specialty String?
+  avatar    String?
+  color     String?
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Patient {
+  id           String            @id @default(uuid())
+  name         String
+  lastName     String
+  dni          String            @unique
+  dob          DateTime
+  phone        String
+  email           String?
+  coverages       PatientCoverage[]
+  appointments    Appointment[]
+  toothConditions ToothCondition[]
+  attachments     PatientAttachment[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model InsuranceProvider {
+  id        String          @id @default(uuid())
+  name      String
+  plans     InsurancePlan[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model InsurancePlan {
+  id         String            @id @default(uuid())
+  name       String
+  providerId String
+  provider   InsuranceProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  coverages  PatientCoverage[]
+}
+
+model PatientCoverage {
+  id              String        @id @default(uuid())
+  patientId       String
+  patient         Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  insurancePlanId String
+  insurancePlan   InsurancePlan @relation(fields: [insurancePlanId], references: [id], onDelete: Cascade)
+  affiliateNumber String?
+  active          Boolean       @default(true)
+}
+
+model Appointment {
+  id             String              @id @default(uuid())
+  date           DateTime
+  duration       Int                 @default(30) // in minutes
+  notes          String?
+  status         String              @default("PENDING") // AppointmentStatus: PENDING, CONFIRMED, CANCELLED, COMPLETED
+  practiceType   String              // PracticeType: GENERAL_CONSULTATION, etc.
+  
+  patientId      String
+  patient        Patient             @relation(fields: [patientId], references: [id])
+  
+  professionalId String
+  professional   User                @relation("ProfessionalAppointments", fields: [professionalId], references: [id])
+
+  notifications  NotificationMessage[]
+  
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  action     String
+  entityType String
+  entityId   String?
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model ProfessionalAbsence {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  start     DateTime
+  end       DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+}
+
+model NotificationMessage {
+  id            String   @id @default(uuid())
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  status        String   // e.g., "SENT", "DELIVERED", "FAILED"
+  providerId    String?  // e.g., WhatsApp message ID
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ToothCondition {
+  id          String   @id @default(uuid())
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  toothNumber Int
+  condition   String   // e.g., 'CARIES', 'EXTRACTED', 'FILLED', 'CROWN', 'ROOT_CANAL'
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([patientId, toothNumber])
+}
+
+model PatientAttachment {
+  id        String   @id @default(uuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  fileName  String
+  fileUrl   String
+  fileType  String   // e.g., 'image/jpeg', 'application/pdf'
+  createdAt DateTime @default(now())
+}
