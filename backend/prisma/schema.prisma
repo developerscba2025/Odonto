@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  passwordHash  String
+  role          String   // ADMIN, DENTIST, RECEPTIONIST
+  
+  appointments  Appointment[]
+  clinicalHist  ClinicalHistory[]
+}
+
+model Patient {
+  id             String   @id @default(uuid())
+  firstName      String
+  lastName       String
+  dni            String   @unique
+  birthDate      DateTime?
+  phone          String?
+  email          String?
+  obraSocial     String?  // Texto libre (ej. OSDE, Ninguna)
+  affiliateNum   String?
+  createdAt      DateTime @default(now())
+
+  appointments   Appointment[]
+  clinicalHist   ClinicalHistory[]
+  odontograms    Odontogram[]
+}
+
+model Appointment {
+  id             String   @id @default(uuid())
+  patientId      String
+  professionalId String
+  date           DateTime
+  startTime      String   // ej: "10:30"
+  endTime        String   // ej: "11:00"
+  status         String   // PENDING, CONFIRMED, ATTENDED, CANCELLED
+  reason         String?
+  notes          String?
+
+  patient        Patient  @relation(fields: [patientId], references: [id])
+  professional   User     @relation(fields: [professionalId], references: [id])
+}
+
+model ClinicalHistory {
+  id             String   @id @default(uuid())
+  patientId      String
+  professionalId String
+  date           DateTime @default(now())
+  description    String
+  attachments    String?  // Ej: URLs / referencias a archivos
+
+  patient        Patient  @relation(fields: [patientId], references: [id])
+  professional   User     @relation(fields: [professionalId], references: [id])
+}
+
+model Odontogram {
+  id             String   @id @default(uuid())
+  patientId      String
+  toothNumber    Int
+  status         String   // CARIES, REPAIR, EXTRACTION...
+  notes          String?
+
+  patient        Patient  @relation(fields: [patientId], references: [id])
+}
