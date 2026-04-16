@@ -6,8 +6,10 @@ import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { Badge } from '../../components/ui/Badge';
+import { useToast } from '../../store/ToastContext';
 
 export const TeamTab = () => {
+  const { showToast } = useToast();
   const [professionals, setProfessionals] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -16,6 +18,7 @@ export const TeamTab = () => {
   const [newMember, setNewMember] = useState({
     name: '',
     email: '',
+    password: '',
     role: 'DENTIST',
     color: '#3b82f6'
   });
@@ -42,10 +45,10 @@ export const TeamTab = () => {
     try {
       await api.post('/auth/professionals', newMember);
       setIsModalOpen(false);
-      setNewMember({ name: '', email: '', role: 'DENTIST', color: '#3b82f6' });
+      setNewMember({ name: '', email: '', password: '', role: 'DENTIST', color: '#3b82f6' });
       fetchProfessionals();
     } catch (error) {
-      alert('Error al agregar miembro');
+      showToast('Error al agregar miembro', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -86,6 +89,14 @@ export const TeamTab = () => {
             value={newMember.email}
             onChange={e => setNewMember({...newMember, email: e.target.value})}
            />
+           <Input 
+            required
+            label="Contraseña de Acceso"
+            type="password"
+            placeholder="Mínimo 6 caracteres"
+            value={newMember.password}
+            onChange={e => setNewMember({...newMember, password: e.target.value})}
+           />
            <div className="space-y-2">
              <label className="text-[10px] font-black text-text-muted uppercase tracking-wider ml-1">Color de Identidad</label>
              <div className="flex gap-3">
@@ -124,7 +135,7 @@ export const TeamTab = () => {
               </div>
               <div>
                 <p className="font-black text-text-main leading-tight">{prof.name}</p>
-                <Badge size="xs" variant="slate" className="mt-1">{prof.role}</Badge>
+                <Badge size="xs" variant="slate" className="mt-1">{prof.role === 'DENTIST' ? 'Odontólogo' : prof.role === 'ADMIN' ? 'Admin' : prof.role}</Badge>
               </div>
             </div>
             <Button 

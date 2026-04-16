@@ -1,0 +1,18 @@
+:root {
+  /* Marca Predominante (Azul Login) */
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+
+  /* Fondos con tinte azulado sutil */
+  --bg-main: #f0f7ff; /* Muy claro con tinte azul */
+  --bg-surface: #ffffff;
+  
+  /* Textos */
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  
+  /* Bordes */
+  --border-main: #dbeafe; /* Azul muy claro */
+
+  color-scheme: light;
+}

@@ -2,17 +2,22 @@ import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secure-secret-key-dentalflow';
+import { AuthRequest } from '../middleware/auth';
+import { loginSchema } from '../lib/validators';
+
+
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET no está definido en las variables de entorno. El servidor no puede arrancar de forma segura.');
+}
+
 
 export const login = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email y contraseña son requeridos' });
-    }
+    const { email, password } = loginSchema.parse(req.body);
 
     const user = await prisma.user.findUnique({
+
       where: { email }
     });
 
@@ -43,37 +48,36 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ error: error.errors[0].message });
+    }
     console.error('Login error:', error);
     res.status(500).json({ error: 'Error interno del servidor durante el login' });
   }
+
 };
 
-export const getMe = async (req: any, res: Response): Promise<any> => {
+export const getMe = async (req: AuthRequest, res: Response): Promise<any> => {
    try {
      const user = await prisma.user.findUnique({
-       where: { id: req.user.id }
+       where: { id: req.user!.id },
+       select: { id: true, name: true, email: true, role: true, color: true }
      });
      
      if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
-
-     res.json({
-       id: user.id,
-       name: user.name,
-       email: user.email,
-       role: user.role,
-       color: user.color
-     });
+     res.json(user);
    } catch (error) {
      res.status(500).json({ error: 'Error al obtener perfil' });
    }
 };
 
+
 export const getProfessionals = async (req: Request, res: Response): Promise<any> => {
   try {
     const professionals = await prisma.user.findMany({
       where: {
-        role: { in: ['DENTIST', 'ADMIN'] }
+        role: 'DENTIST'
       },
       select: { id: true, name: true, email: true, role: true, color: true }
     });
@@ -83,18 +87,20 @@ export const getProfessionals = async (req: Request, res: Response): Promise<any
   }
 };
 
-export const updateProfile = async (req: any, res: Response): Promise<any> => {
+export const updateProfile = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const { name, email } = req.body;
     const user = await prisma.user.update({
-      where: { id: req.user.id },
-      data: { name, email }
+      where: { id: req.user!.id },
+      data: { name, email },
+      select: { id: true, name: true, email: true, role: true, color: true }
     });
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: 'Error al actualizar perfil' });
   }
 };
+
 
 export const createProfessional = async (req: Request, res: Response): Promise<any> => {
   try {
@@ -120,7 +126,7 @@ export const createProfessional = async (req: Request, res: Response): Promise<a
 
 export const updateProfessional = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { name, email, role, color } = req.body;
     
     const updated = await prisma.user.update({

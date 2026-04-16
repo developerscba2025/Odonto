@@ -1,12 +1,52 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Building2, Upload } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
+import { useToast } from '../../store/ToastContext';
+import api from '../../lib/api';
 
 export const ClinicTab = () => {
+  const { showToast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    name: 'Nexus Clínica Dental',
+    phone: '',
+    address: ''
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data } = await api.get('/settings/clinic');
+        if (data) {
+          setFormData({ name: data.name || '', phone: data.phone || '', address: data.address || '' });
+        }
+      } catch (e) {
+        showToast('Error al cargar ajustes de la clínica', 'error');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      await api.put('/settings/clinic', formData);
+      showToast('Configuración de clínica guardada', 'success');
+      setTimeout(() => window.location.reload(), 1000); // Reload to reflect UI changes if any
+    } catch (e) {
+      showToast('Error al guardar la configuración', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
   return (
-    <div className="relative z-10 space-y-8 animate-in slide-in-from-right-4 duration-500">
+    <form onSubmit={handleSave} className="relative z-10 space-y-8 animate-in slide-in-from-right-4 duration-500">
       <header>
         <h2 className="text-2xl font-black text-text-main tracking-tight">Datos de la Clínica</h2>
         <p className="text-xs text-text-muted font-bold uppercase tracking-widest mt-1 opacity-60">Información Pública y Branding</p>
@@ -28,10 +68,14 @@ export const ClinicTab = () => {
           <Input 
             label="Nombre Comercial"
             placeholder="Ej: DentalFlow Centro de Estética"
+            value={formData.name}
+            onChange={(e) => setFormData({...formData, name: e.target.value})}
           />
           <Input 
             label="Teléfono de Contacto"
             placeholder="+54 11 1234 5678"
+            value={formData.phone}
+            onChange={(e) => setFormData({...formData, phone: e.target.value})}
           />
         </div>
         
@@ -39,14 +83,16 @@ export const ClinicTab = () => {
           <label className="text-[10px] font-black text-text-muted uppercase tracking-wider ml-1">Dirección Física</label>
           <textarea 
             placeholder="Ej: Av. Santa Fe 1234, CABA"
-            className="w-full bg-black/20 border border-[#1e293b] rounded-[2rem] px-6 py-4 text-sm text-text-main placeholder:text-text-muted/30 focus:border-blue-500/50 outline-none transition-all min-h-[120px]"
+            value={formData.address}
+            onChange={(e) => setFormData({...formData, address: e.target.value})}
+            className="w-full bg-bg-surface border border-border-main rounded-2xl px-6 py-4 text-sm text-text-main placeholder:text-text-muted/30 focus:border-blue-500/50 outline-none transition-all min-h-[120px] shadow-inner"
           />
         </div>
       </div>
 
       <div className="flex justify-end pt-8">
-        <Button size="lg">Guardar Configuración</Button>
+        <Button type="submit" size="lg" isLoading={isSaving}>Guardar Configuración</Button>
       </div>
-    </div>
+    </form>
   );
 };

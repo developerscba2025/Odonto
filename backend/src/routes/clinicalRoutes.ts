@@ -3,7 +3,8 @@ import {
   getHistoryByPatient, 
   createEvolution, 
   getTreatmentPlans, 
-  createTreatmentPlan 
+  createTreatmentPlan,
+  updateTreatmentPlan 
 } from '../controllers/clinicalController';
 import { authenticateJWT } from '../middleware/auth';
 
@@ -15,5 +16,6 @@ router.get('/patient/:patientId', getHistoryByPatient);
 router.post('/', createEvolution);
 router.get('/patient/:patientId/plans', getTreatmentPlans);
 router.post('/plans', createTreatmentPlan);
+router.put('/plans/:id', updateTreatmentPlan);
 
 export default router;

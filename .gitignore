@@ -34,9 +34,6 @@ yarn-error.log*
 *.sln
 *.sw?
 
-# Prisma
-/backend/prisma/dev.db
-/backend/prisma/dev.db-journal
 
 # Backend Specific
 /backend/uploads/*

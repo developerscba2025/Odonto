@@ -15,18 +15,20 @@ import { ProfileTab } from '../features/settings/ProfileTab';
 import { TeamTab } from '../features/settings/TeamTab';
 import { ClinicTab } from '../features/settings/ClinicTab';
 import { SystemTab } from '../features/settings/SystemTab';
+import { useAuth } from '../store/AuthContext';
 
 type TabType = 'perfil' | 'equipo' | 'clinica' | 'sistema';
 
 export default function Settings() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('perfil');
 
   const tabs = [
-    { id: 'perfil', label: 'Mi Perfil', icon: User, color: 'text-blue-500' },
-    { id: 'equipo', label: 'Equipo Médico', icon: Users, color: 'text-emerald-500' },
-    { id: 'clinica', label: 'Clínica', icon: Building2, color: 'text-orange-500' },
-    { id: 'sistema', label: 'Sistema', icon: SettingsIcon, color: 'text-purple-500' },
-  ];
+    { id: 'perfil', label: 'Mi Perfil', icon: User, color: 'text-blue-500', adminOnly: false },
+    { id: 'equipo', label: 'Equipo Médico', icon: Users, color: 'text-emerald-500', adminOnly: true },
+    { id: 'clinica', label: 'Clínica', icon: Building2, color: 'text-orange-500', adminOnly: true },
+    { id: 'sistema', label: 'Sistema', icon: SettingsIcon, color: 'text-purple-500', adminOnly: true },
+  ].filter(tab => !tab.adminOnly || user?.role === 'ADMIN');
 
   return (
     <div className="flex flex-col min-h-screen animate-in fade-in duration-700 space-y-8">
@@ -42,10 +44,10 @@ export default function Settings() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as TabType)}
-              className={`w-full flex items-center justify-between p-5 rounded-[2rem] transition-all duration-300 group ${
+              className={`w-full flex items-center justify-between p-5 rounded-2xl transition-all duration-300 group ${
                 activeTab === tab.id 
-                ? 'bg-bg-surface border border-border-main shadow-2xl shadow-black/10 scale-105 z-10' 
-                : 'hover:bg-white/5 text-text-muted hover:text-text-main'
+                ? 'bg-bg-surface border border-border-main shadow-lg border-l-2 border-l-blue-500' 
+                : 'hover:bg-bg-main text-text-muted hover:text-text-main border border-transparent'
               }`}
             >
               <div className="flex items-center gap-5">

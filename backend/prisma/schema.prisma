@@ -47,6 +47,8 @@ model Appointment {
   reason         String?
   notes          String?
   service        String?
+  isDeleted      Boolean  @default(false)
+
   professional   User     @relation(fields: [professionalId], references: [id])
   patient        Patient  @relation(fields: [patientId], references: [id])
 }
@@ -62,25 +64,29 @@ model Attachment {
 }
 
 model TreatmentPlan {
-  id          String   @id @default(uuid())
+  id          String            @id @default(uuid())
   patientId   String
   description String
   budget      Float?
   status      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  patient     Patient  @relation(fields: [patientId], references: [id])
+  tasks       String?           @default("[]")
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  patient     Patient           @relation(fields: [patientId], references: [id])
+  histories   ClinicalHistory[]
 }
 
 model ClinicalHistory {
   id                String       @id @default(uuid())
   patientId         String
   professionalId    String
+  treatmentPlanId   String?
   date              DateTime     @default(now())
   description       String
   attachments       Attachment[]
   professional      User         @relation(fields: [professionalId], references: [id])
   patient           Patient      @relation(fields: [patientId], references: [id])
+  treatmentPlan     TreatmentPlan? @relation(fields: [treatmentPlanId], references: [id])
   odontogramEntries Odontogram[]
 }
 
@@ -93,4 +99,12 @@ model Odontogram {
   notes             String?
   clinicalHistory   ClinicalHistory? @relation(fields: [clinicalHistoryId], references: [id])
   patient           Patient          @relation(fields: [patientId], references: [id])
+}
+
+model ClinicSettings {
+  id      String   @id @default("singleton")
+  name    String   @default("OdontoNexus")
+  phone   String?
+  address String?
+  logoUrl String?
 }

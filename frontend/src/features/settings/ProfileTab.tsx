@@ -5,9 +5,11 @@ import api from '../../lib/api';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
+import { useToast } from '../../store/ToastContext';
 
 export const ProfileTab = () => {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -28,9 +30,9 @@ export const ProfileTab = () => {
     setIsSaving(true);
     try {
       await api.put('/auth/profile', profileData);
-      alert('Perfil actualizado con éxito');
+      showToast('Perfil actualizado con éxito', 'success');
     } catch (error) {
-      alert('Error al actualizar perfil');
+      showToast('Error al actualizar perfil', 'error');
     } finally {
       setIsSaving(false);
     }

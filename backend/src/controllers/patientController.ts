@@ -1,12 +1,17 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
+import { createPatientSchema } from '../lib/validators';
+
 
 export const getAllPatients = async (req: Request, res: Response) => {
   try {
     const { includeDeleted, search } = req.query;
     
-    const patients = await prisma.patient.findMany({
-      where: {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const skip = (page - 1) * limit;
+
+    const whereObj = {
         AND: [
           includeDeleted === 'true' ? {} : { isDeleted: false },
           search ? {
@@ -17,11 +22,27 @@ export const getAllPatients = async (req: Request, res: Response) => {
             ]
           } : {}
         ]
-      },
-      orderBy: { lastName: 'asc' }
-    });
+    };
+
+    const [patients, total] = await Promise.all([
+      prisma.patient.findMany({
+        where: whereObj,
+        orderBy: { lastName: 'asc' },
+        skip,
+        take: limit
+      }),
+      prisma.patient.count({ where: whereObj })
+    ]);
     
-    res.json(patients);
+    res.json({
+      data: patients,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener pacientes' });
   }
@@ -50,9 +71,9 @@ export const getPatientById = async (req: Request, res: Response): Promise<any> 
   }
 };
 
-export const createPatient = async (req: Request, res: Response) => {
+export const createPatient = async (req: Request, res: Response): Promise<any> => {
   try {
-    const data = req.body;
+    const data = createPatientSchema.parse(req.body);
     const newPatient = await prisma.patient.create({
       data: {
         ...data,
@@ -61,7 +82,11 @@ export const createPatient = async (req: Request, res: Response) => {
     });
     res.status(201).json(newPatient);
   } catch (error: any) {
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ error: error.errors[0].message });
+    }
     if (error.code === 'P2002') {
+
       return res.status(400).json({ error: 'Ya existe un paciente con ese DNI' });
     }
     res.status(500).json({ error: 'Error al crear paciente' });

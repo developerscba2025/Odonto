@@ -22,9 +22,11 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Opcional: Redirigir al login o limpiar localStorage
+    if (error.response?.status === 401 || error.response?.status === 403) {
       console.error('Sesión expirada o no autorizada');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

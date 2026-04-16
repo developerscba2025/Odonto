@@ -20,8 +20,8 @@ export const Card = ({
   };
 
   const paddings = {
-    none: 'p-0',
-    sm: 'p-4 rounded-2xl',
+    none: 'p-0 rounded-2xl',
+    sm: 'p-4 rounded-xl',
     md: 'p-6 lg:p-8 rounded-[2rem]',
     lg: 'p-10 lg:p-12 rounded-[3rem]'
   };

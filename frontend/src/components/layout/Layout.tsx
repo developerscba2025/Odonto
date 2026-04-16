@@ -31,6 +31,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
+  const [clinicName, setClinicName] = useState('OdontoNexus');
+
   useEffect(() => {
     const fetchAlert = async () => {
       try {
@@ -42,7 +44,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         console.error('Error fetching alert:', error);
       }
     };
+    
+    const fetchClinicSettings = async () => {
+      try {
+        const { data } = await api.get('/settings/clinic');
+        if (data?.name) {
+          setClinicName(data.name);
+        }
+      } catch(e) {}
+    };
+
     fetchAlert();
+    fetchClinicSettings();
   }, []);
 
   const getInitials = (name: string) => {
@@ -55,7 +68,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
+    { name: 'Panel', icon: LayoutDashboard, path: '/' },
     { name: 'Agenda', icon: CalendarDays, path: '/agenda' },
     { name: 'Pacientes', icon: Users, path: '/pacientes' },
     { name: 'Configuración', icon: Settings, path: '/configuracion' },
@@ -73,13 +86,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Abstract Background Decoration */}
         <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-blue-500/5 to-transparent pointer-events-none" />
 
-        <div className="flex items-center gap-3 h-24 px-6 border-b border-border-main/50 mb-4">
+        <div className="flex items-center gap-3 h-24 px-6 border-b border-border-main mb-4">
           <div className="bg-blue-600 text-white p-2 rounded-2xl shadow-lg shadow-blue-500/30 flex-shrink-0">
             <Smile className="w-7 h-7" />
           </div>
           <div className={`transition-all duration-500 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 scale-90 w-0 overflow-hidden'}`}>
-            <span className="text-xl font-black tracking-tighter block leading-none">DentalFlow</span>
-            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-[0.2em] mt-1">Surgical OS</span>
+            <span className="text-xl font-black tracking-tighter block leading-none">{clinicName}</span>
+            <span className="text-[10px] text-text-muted mt-0.5 lowercase tracking-wider opacity-60">nexus OS</span>
           </div>
         </div>
 
@@ -106,7 +119,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
         
-        <div className="p-4 border-t border-border-main/50 space-y-4">
+        <div className="p-4 border-t border-border-main space-y-4">
           <button 
             onClick={logout}
             className={`flex items-center gap-4 w-full px-4 py-4 rounded-[1.5rem] text-red-500/60 hover:text-red-500 hover:bg-red-500/10 transition-all group`}
@@ -129,13 +142,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               variant="ghost" 
               size="sm" 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
-              className="p-3 bg-bg-surface/50 border border-border-main/50 backdrop-blur-xl"
+              className="p-3 bg-bg-surface/50 border border-border-main backdrop-blur-xl rounded-xl"
             >
               <Menu className="w-5 h-5" />
             </Button>
-            <div className={`hidden md:flex transition-all duration-500 ${isSidebarOpen ? 'translate-x-2' : ''}`}>
-               <Badge variant="blue">Operativo</Badge>
-            </div>
           </div>
 
           <div className="flex items-center gap-6">
@@ -143,15 +153,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Search className="w-5 h-5 absolute left-5 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-blue-500 transition-colors" />
               <input 
                 type="text" 
-                placeholder="Buscar en el sistema..." 
-                className="pl-14 pr-6 py-4 bg-bg-surface/40 backdrop-blur-xl border border-border-main/50 rounded-[2rem] text-sm focus:bg-bg-surface focus:border-blue-500/50 outline-none w-80 transition-all shadow-xl shadow-black/5"
+                placeholder="Buscar paciente o tratamiento..." 
+                className="pl-14 pr-6 py-4 bg-bg-surface/40 backdrop-blur-xl border border-border-main rounded-xl text-sm focus:bg-bg-surface focus:border-blue-500/50 outline-none w-80 transition-all shadow-xl shadow-black/5"
               />
             </div>
 
             <div className="flex items-center gap-3">
               <button 
                 onClick={toggleTheme}
-                className="p-4 bg-bg-surface/50 border border-border-main/50 backdrop-blur-xl text-text-muted hover:text-text-main rounded-[1.5rem] transition-all shadow-xl shadow-black/5"
+                className="p-3.5 bg-bg-surface/50 border border-border-main backdrop-blur-xl text-text-muted hover:text-text-main rounded-xl transition-all shadow-xl shadow-black/5"
               >
                 {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
               </button>
@@ -159,7 +169,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <div className="relative">
                 <button 
                   onClick={() => setShowNotification(!showNotification)}
-                  className="p-4 bg-bg-surface/50 border border-border-main/50 backdrop-blur-xl text-text-muted hover:text-text-main rounded-[1.5rem] transition-all shadow-xl shadow-black/5 relative"
+                  className="p-3.5 bg-bg-surface/50 border border-border-main backdrop-blur-xl text-text-muted hover:text-text-main rounded-xl transition-all shadow-xl shadow-black/5 relative"
                 >
                   <Bell className="w-5 h-5" />
                   {notification && (
@@ -201,7 +211,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
             <div 
               onClick={() => navigate('/configuracion')}
-              className="flex items-center gap-3 pl-2 pr-5 py-2 bg-bg-surface/50 border border-border-main/50 backdrop-blur-xl rounded-[2rem] hover:bg-bg-surface transition-all cursor-pointer shadow-xl shadow-black/5 group"
+              className="flex items-center gap-3 pl-2 pr-5 py-1.5 bg-bg-surface/50 border border-border-main backdrop-blur-xl rounded-xl hover:bg-bg-surface transition-all cursor-pointer shadow-xl shadow-black/5 group"
             >
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex justify-center items-center text-white text-xs font-black shadow-lg shadow-blue-500/20 transition-transform group-hover:scale-105">
                 {user ? getInitials(user.name) : '??'}
@@ -222,7 +232,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <div className="absolute bottom-[10%] left-[15%] w-[400px] h-[400px] bg-indigo-600/5 blur-[100px] rounded-full" />
            </div>
 
-           <div className="max-w-[1600px] mx-auto min-h-full flex flex-col">
+           <div className="max-w-[1440px] mx-auto min-h-full flex flex-col">
               {children}
            </div>
         </div>

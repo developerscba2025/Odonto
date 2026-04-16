@@ -23,15 +23,15 @@ const ToastItem = ({ toast, onClose }: { toast: any; onClose: () => void }) => {
   };
 
   const colors = {
-    success: 'border-emerald-500/20 bg-emerald-500/5',
-    error: 'border-red-500/20 bg-red-500/5',
-    warning: 'border-orange-500/20 bg-orange-500/5',
-    info: 'border-blue-500/20 bg-blue-500/5',
+    success: 'border-emerald-500/50 bg-emerald-500/10',
+    error: 'border-red-500/50 bg-red-500/10',
+    warning: 'border-orange-500/50 bg-orange-500/10',
+    info: 'border-blue-500/50 bg-blue-500/10',
   };
 
   return (
     <div className={`
-      flex items-center gap-4 min-w-[300px] p-5 rounded-[1.5rem] border backdrop-blur-xl shadow-2xl animate-in slide-in-from-right-4 duration-300
+      flex items-center gap-4 min-w-[300px] p-5 rounded-[1.5rem] border-2 backdrop-blur-xl shadow-2xl animate-in slide-in-from-right-4 duration-300
       ${colors[toast.type as keyof typeof colors]}
     `}>
       <div className="flex-shrink-0 animate-bounce">

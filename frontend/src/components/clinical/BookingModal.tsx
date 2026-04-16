@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, User, Clock, Stethoscope, Check, X, Users, AlertCircle, Plus } from 'lucide-react';
+import { Search, User, Clock, Stethoscope, Check, X, Users, AlertCircle, Plus, UserPlus } from 'lucide-react';
 import api from '../../lib/api';
 
 // UI Atoms
@@ -27,10 +27,14 @@ interface BookingModalProps {
   onClose: () => void;
   onSuccess: () => void;
   initialData?: {
+    appointmentId?: string;
+    patient?: Patient;
     date: string;
     startTime: string;
     endTime: string;
     professionalId?: string;
+    service?: string;
+    notes?: string;
   };
 }
 
@@ -50,6 +54,11 @@ export const BookingModal = ({ isOpen, onClose, onSuccess, initialData }: Bookin
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Mode: 'search' | 'create-quick'
+  const [mode, setMode] = useState<'search' | 'create-quick'>('search');
+  const [quickPatientForm, setQuickPatientForm] = useState({ firstName: '', lastName: '', dni: '', phone: '' });
+  const [isCreatingPatient, setIsCreatingPatient] = useState(false);
 
   const [formData, setFormData] = useState({
     professionalId: '',
@@ -60,7 +69,14 @@ export const BookingModal = ({ isOpen, onClose, onSuccess, initialData }: Bookin
 
   useEffect(() => {
     if (initialData) {
-      setFormData(prev => ({ ...prev, ...initialData }));
+      setFormData(prev => ({ 
+        ...prev, 
+        ...initialData,
+        serviceId: SERVICE_PRESETS.find(p => p.label === initialData.service)?.id || 'consulta'
+      }));
+      if (initialData.patient && !selectedPatient) {
+        setSelectedPatient(initialData.patient);
+      }
     }
   }, [initialData]);
 
@@ -87,7 +103,7 @@ export const BookingModal = ({ isOpen, onClose, onSuccess, initialData }: Bookin
       }
       try {
         const res = await api.get(`/patients?search=${searchTerm}`);
-        setPatients(res.data);
+        setPatients(res.data.data || res.data);
       } catch (e) {
         console.error(e);
       }
@@ -104,6 +120,33 @@ export const BookingModal = ({ isOpen, onClose, onSuccess, initialData }: Bookin
     });
   };
 
+  // Create patient on the fly and then select it
+  const handleCreateQuickPatient = async () => {
+    if (!quickPatientForm.firstName || !quickPatientForm.lastName) {
+      return showToast('Ingresá nombre y apellido', 'warning');
+    }
+    if (!quickPatientForm.dni) {
+      return showToast('El DNI es requerido para registrar el turno', 'warning');
+    }
+    setIsCreatingPatient(true);
+    try {
+      const res = await api.post('/patients', {
+        firstName: quickPatientForm.firstName,
+        lastName: quickPatientForm.lastName,
+        dni: quickPatientForm.dni,
+        phone: quickPatientForm.phone || null,
+      });
+      setSelectedPatient(res.data);
+      setMode('search');
+      showToast(`Paciente ${res.data.firstName} registrado y seleccionado`, 'success');
+    } catch (error: any) {
+      const msg = error?.response?.data?.error || 'Error al registrar el paciente';
+      showToast(msg, 'error');
+    } finally {
+      setIsCreatingPatient(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPatient) return showToast('Debes seleccionar un paciente', 'warning');
@@ -112,7 +155,7 @@ export const BookingModal = ({ isOpen, onClose, onSuccess, initialData }: Bookin
     setIsSubmitting(true);
     try {
       const selectedPreset = SERVICE_PRESETS.find(p => p.id === formData.serviceId);
-      await api.post('/appointments', {
+      const payload = {
         patientId: selectedPatient.id,
         professionalId: formData.professionalId,
         date: formData.date,
@@ -121,8 +164,15 @@ export const BookingModal = ({ isOpen, onClose, onSuccess, initialData }: Bookin
         status: 'PENDING',
         service: selectedPreset?.label || 'Consulta',
         notes: formData.notes
-      });
-      showToast('Turno agendado correctamente', 'success');
+      };
+
+      if (initialData?.appointmentId) {
+        await api.put(`/appointments/${initialData.appointmentId}`, payload);
+        showToast('Turno actualizado correctamente', 'success');
+      } else {
+        await api.post('/appointments', payload);
+        showToast('Turno agendado correctamente', 'success');
+      }
       onSuccess();
       onClose();
       resetForm();
@@ -136,6 +186,8 @@ export const BookingModal = ({ isOpen, onClose, onSuccess, initialData }: Bookin
   const resetForm = () => {
     setSearchTerm('');
     setSelectedPatient(null);
+    setMode('search');
+    setQuickPatientForm({ firstName: '', lastName: '', dni: '', phone: '' });
     setFormData({
       professionalId: professionals[0]?.id || '',
       serviceId: 'consulta',
@@ -150,42 +202,35 @@ export const BookingModal = ({ isOpen, onClose, onSuccess, initialData }: Bookin
     <Modal 
       isOpen={isOpen} 
       onClose={onClose} 
-      title="Agendar Nuevo Turno" 
+      title={initialData?.appointmentId ? "Editar Turno" : "Agendar Nuevo Turno"} 
       subtitle={`${formData.date} | ${formData.startTime} - ${formData.endTime}`}
     >
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Patient Search */}
+        {/* Patient Search / Quick Create */}
         <div className="space-y-3">
-          <label className="text-[10px] font-black text-text-muted uppercase tracking-wider ml-1">Paciente</label>
-          {!selectedPatient ? (
-            <div className="relative">
-              <Input 
-                placeholder="Buscar por DNI o Apellido..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                icon={Search}
-              />
-              {patients.length > 0 && (
-                <div className="absolute top-full left-0 w-full mt-2 bg-bg-surface border border-border-main rounded-2xl shadow-2xl z-[100] max-h-48 overflow-y-auto overflow-x-hidden p-2 space-y-1">
-                  {patients.map(p => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setSelectedPatient(p)}
-                      className="w-full text-left p-3 hover:bg-blue-600 hover:text-white rounded-xl transition-all flex justify-between items-center group"
-                    >
-                      <div className="flex flex-col">
-                         <span className="font-black text-sm">{p.lastName}, {p.firstName}</span>
-                         <span className="text-[10px] opacity-60">DNI: {p.dni}</span>
-                      </div>
-                      <Plus className="w-4 h-4 opacity-0 group-hover:opacity-100" />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center justify-between p-4 bg-blue-600/5 border border-blue-600/20 rounded-2xl">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-black text-text-muted uppercase tracking-wider ml-1">Paciente</label>
+            {!selectedPatient && (
+              <button
+                type="button"
+                onClick={() => setMode(mode === 'search' ? 'create-quick' : 'search')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
+                  mode === 'create-quick' 
+                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/30' 
+                    : 'bg-blue-500/10 text-blue-500 border border-blue-500/20 hover:bg-blue-500/20'
+                }`}
+              >
+                {mode === 'create-quick' 
+                  ? <><Search className="w-2.5 h-2.5" /> Buscar Existente</>
+                  : <><UserPlus className="w-2.5 h-2.5" /> Nuevo Paciente</>
+                }
+              </button>
+            )}
+          </div>
+
+          {selectedPatient ? (
+            // Selected patient pill
+            <div className="flex items-center justify-between p-4 bg-bg-main/30 border border-border-main rounded-2xl">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white">
                   <User className="w-5 h-5" />
@@ -203,37 +248,115 @@ export const BookingModal = ({ isOpen, onClose, onSuccess, initialData }: Bookin
                 <X className="w-4 h-4" />
               </button>
             </div>
+          ) : mode === 'search' ? (
+            // Search existing patient
+            <div className="relative">
+              <Input 
+                placeholder="Buscar por DNI o Apellido..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                icon={Search}
+              />
+              {patients.length > 0 && (
+                <div className="absolute top-full left-0 w-full mt-2 bg-bg-surface border border-border-main rounded-2xl shadow-2xl z-[100] max-h-48 overflow-y-auto overflow-x-hidden p-2 space-y-1">
+                  {patients.map(p => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => { setSelectedPatient(p); setSearchTerm(''); setPatients([]); }}
+                      className="w-full text-left p-3 hover:bg-blue-600 hover:text-white rounded-xl transition-all flex justify-between items-center group"
+                    >
+                      <div className="flex flex-col">
+                         <span className="font-black text-sm">{p.lastName}, {p.firstName}</span>
+                         <span className="text-[10px] opacity-60">DNI: {p.dni}</span>
+                      </div>
+                      <Plus className="w-4 h-4 opacity-0 group-hover:opacity-100" />
+                    </button>
+                  ))}
+                </div>
+              )}
+              {searchTerm.length >= 2 && patients.length === 0 && (
+                <p className="text-[10px] text-text-muted mt-2 ml-1 opacity-60">
+                  Sin resultados · <button type="button" onClick={() => setMode('create-quick')} className="text-blue-500 underline font-black">Registrar nuevo paciente</button>
+                </p>
+              )}
+            </div>
+          ) : (
+            // Quick create form
+            <div className="space-y-3 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl">
+              <p className="text-[10px] font-black text-emerald-500 uppercase tracking-wider flex items-center gap-1.5">
+                <UserPlus className="w-3 h-3" /> Datos Básicos del Nuevo Paciente
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  placeholder="Nombre *"
+                  value={quickPatientForm.firstName}
+                  onChange={e => setQuickPatientForm(p => ({ ...p, firstName: e.target.value }))}
+                />
+                <Input
+                  placeholder="Apellido *"
+                  value={quickPatientForm.lastName}
+                  onChange={e => setQuickPatientForm(p => ({ ...p, lastName: e.target.value }))}
+                />
+                <Input
+                  placeholder="DNI *"
+                  value={quickPatientForm.dni}
+                  onChange={e => setQuickPatientForm(p => ({ ...p, dni: e.target.value }))}
+                />
+                <Input
+                  placeholder="Teléfono (WhatsApp)"
+                  value={quickPatientForm.phone}
+                  onChange={e => setQuickPatientForm(p => ({ ...p, phone: e.target.value }))}
+                />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                icon={UserPlus}
+                isLoading={isCreatingPatient}
+                onClick={handleCreateQuickPatient}
+                className="w-full border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
+              >
+                Registrar y Seleccionar
+              </Button>
+            </div>
           )}
         </div>
 
-        {/* Professional Selection */}
-        <div className="space-y-2">
-           <label className="text-[10px] font-black text-text-muted uppercase tracking-wider ml-1">Especialista</label>
-           <div className="grid grid-cols-2 gap-3">
-             {professionals.map(prof => (
-               <button
-                key={prof.id}
-                type="button"
-                onClick={() => setFormData({...formData, professionalId: prof.id})}
-                className={`p-3 rounded-2xl border transition-all flex items-center gap-3 ${formData.professionalId === prof.id ? 'border-blue-600 bg-blue-600/5' : 'border-border-main'}`}
-               >
-                 <div className="w-6 h-6 rounded-lg" style={{ backgroundColor: prof.color || '#3b82f6' }} />
-                 <span className="text-xs font-black text-text-main">{prof.name}</span>
-               </button>
-             ))}
-           </div>
+        <div className="space-y-3 p-4 bg-bg-main/20 border border-border-main rounded-2xl">
+           <label className="text-[10px] font-black text-text-muted uppercase tracking-wider">Especialista</label>
+           {professionals.length === 0 ? (
+             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-center">
+               <p className="text-xs font-bold text-red-500">No hay especialistas disponibles.</p>
+               <p className="text-[10px] text-red-500/70 mt-1">Ve a Ajustes ➝ Equipo para agregar un Odontólogo.</p>
+             </div>
+           ) : (
+             <div className="grid grid-cols-2 gap-3">
+               {professionals.map(prof => (
+                 <button
+                  key={prof.id}
+                  type="button"
+                  onClick={() => setFormData({...formData, professionalId: prof.id})}
+                  className={`p-3 rounded-xl border-2 transition-all flex items-center gap-3 ${formData.professionalId === prof.id ? 'border-blue-600 bg-blue-600/10' : 'border-border-main hover:bg-bg-main/20'}`}
+                 >
+                   <div className="w-5 h-5 rounded-lg flex-shrink-0" style={{ backgroundColor: prof.color || '#3b82f6' }} />
+                   <span className="text-[10px] font-black uppercase tracking-tight text-text-main">{prof.name}</span>
+                 </button>
+               ))}
+             </div>
+           )}
         </div>
 
-        {/* Service Presets */}
-        <div className="space-y-2">
-          <label className="text-[10px] font-black text-text-muted uppercase tracking-wider ml-1">Servicio (Presets Nexus)</label>
+        <div className="space-y-3 p-4 bg-bg-main/20 border border-border-main rounded-2xl">
+          <label className="text-[10px] font-black text-text-muted uppercase tracking-wider">Servicio (Sugerencias)</label>
           <div className="flex flex-wrap gap-2">
             {SERVICE_PRESETS.map(preset => (
               <button
                 key={preset.id}
                 type="button"
                 onClick={() => handleSelectPreset(preset)}
-                className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all ${formData.serviceId === preset.id ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'border-border-main text-text-muted hover:border-blue-500'}`}
+                className={`px-3 py-2 rounded-full text-[8px] font-black uppercase tracking-widest border-2 transition-all ${formData.serviceId === preset.id ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-bg-main/30 border-border-main text-text-muted hover:border-blue-500 hover:text-text-main'}`}
               >
                 {preset.label}
               </button>
@@ -241,11 +364,10 @@ export const BookingModal = ({ isOpen, onClose, onSuccess, initialData }: Bookin
           </div>
         </div>
 
-        {/* Notes / Plan detail */}
-        <div>
+        <div className="space-y-1">
           <label className="text-[10px] font-black text-text-muted uppercase tracking-wider ml-1">Indicaciones / Notas</label>
           <textarea 
-            className="w-full mt-2 p-4 bg-bg-main/50 border border-border-main rounded-2xl text-xs text-text-main focus:border-blue-500/50 outline-none transition-all min-h-[80px]"
+            className="w-full mt-2 p-4 bg-bg-main/30 border-2 border-border-main rounded-2xl text-xs text-text-main focus:border-blue-500/50 outline-none transition-all min-h-[80px] shadow-inner"
             placeholder="Especificaciones del turno..."
             value={formData.notes}
             onChange={e => setFormData({...formData, notes: e.target.value})}

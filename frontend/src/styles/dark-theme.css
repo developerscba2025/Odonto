@@ -1,0 +1,18 @@
+.dark {
+  /* Marca Predominante (Azul Login) */
+  --color-primary: #3b82f6;
+  --color-primary-hover: #60a5fa;
+
+  /* Fondos Azul Medianoche - AJUSTADOS PARA CONTRASTE */
+  --bg-main: #020617;     /* Slate 950 */
+  --bg-surface: #0f172a;  /* Slate 900 - Elevado para profundidad */
+  
+  /* Textos */
+  --text-main: #f8fafc;   /* Slate 50 */
+  --text-muted: #94a3b8;  /* Slate 400 */
+  
+  /* Bordes - Más definidos para el diseño de contenedor */
+  --border-main: #273548; 
+
+  color-scheme: dark;
+}

@@ -1,0 +1,180 @@
+/* FullCalendar — DentalFlow Nexus Theme */
+/* Uses CSS variables to support both light and dark modes */
+
+.fc {
+  font-family: inherit;
+  border: none !important;
+}
+
+/* Toolbar Title */
+.fc .fc-toolbar-title {
+  font-size: 1.25rem !important;
+  font-weight: 900 !important;
+  color: var(--text-main) !important;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+}
+
+/* Toolbar Buttons */
+.fc .fc-button {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-main) !important;
+  color: var(--text-muted) !important;
+  font-weight: 800 !important;
+  padding: 0.6rem 1.2rem !important;
+  border-radius: 0.75rem !important;
+  font-size: 0.7rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  transition: all 0.2s ease;
+  box-shadow: none !important;
+}
+.fc .fc-button:hover {
+  background: var(--bg-main) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-main) !important;
+}
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  background: #2563eb !important;
+  color: white !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+}
+
+/* Column Headers */
+.fc .fc-col-header-cell {
+  padding: 14px 0 !important;
+  background: var(--bg-main) !important;
+  border-bottom: 1px solid var(--border-main) !important;
+}
+.fc .fc-col-header-cell-cushion {
+  color: var(--text-muted) !important;
+  font-weight: 900 !important;
+  font-size: 0.7rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em;
+  text-decoration: none !important;
+}
+
+/* Time Slots */
+.fc .fc-timegrid-axis-cushion,
+.fc .fc-timegrid-slot-label-cushion {
+  color: var(--text-main) !important;
+  font-weight: 800 !important;
+  font-size: 0.65rem !important;
+  opacity: 1 !important;
+}
+
+/* Grid Lines */
+.fc td,
+.fc th {
+  border-color: var(--border-main) !important;
+  border-width: 1px !important;
+}
+.fc-theme-standard .fc-scrollgrid {
+  border: 1px solid var(--border-main) !important;
+  border-radius: 1rem !important;
+  overflow: hidden !important;
+}
+
+/* Today Highlight */
+.fc .fc-day-today {
+  background: rgba(37, 99, 235, 0.05) !important;
+}
+
+/* ============================
+   EVENTS — Color del profesional
+   ============================ */
+.fc-event {
+  border: none !important;
+  border-radius: 0.5rem !important;
+  /* El background viene del backgroundColor del evento (color del prof) */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  margin: 1px 2px !important;
+  cursor: pointer !important;
+  opacity: 0.92;
+}
+.fc-event:hover {
+  transform: translateY(-1px) scale(1.01) !important;
+  z-index: 50 !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35) !important;
+  opacity: 1 !important;
+  filter: brightness(1.1);
+}
+
+/* Texto del evento siempre blanco sobre el color de fondo */
+.fc-event-main {
+  padding: 4px 8px !important;
+  color: #ffffff !important;
+}
+.fc-event-title {
+  font-weight: 800 !important;
+  font-size: 0.72rem !important;
+  color: #ffffff !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fc-event-time {
+  font-size: 0.62rem !important;
+  color: rgba(255,255,255,0.8) !important;
+  font-weight: 700 !important;
+}
+
+/* Mirror (drag preview) */
+.fc-event-mirror {
+  opacity: 0.7 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* List view */
+.fc-list-event:hover td {
+  background: var(--bg-main) !important;
+  cursor: pointer;
+}
+.fc-list-event-dot {
+  border-radius: 50% !important;
+}
+.fc-list-day-cushion {
+  background: var(--bg-main) !important;
+}
+.fc-list-day-text,
+.fc-list-day-side-text {
+  color: var(--text-muted) !important;
+  font-weight: 900 !important;
+  font-size: 0.7rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  text-decoration: none !important;
+}
+.fc-list-event-title a {
+  color: var(--text-main) !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+}
+.fc-list-empty {
+  background: var(--bg-surface) !important;
+  color: var(--text-muted) !important;
+}
+
+/* Selection highlight */
+.fc-highlight {
+  background: rgba(37, 99, 235, 0.12) !important;
+  border-radius: 0.25rem;
+}
+
+/* Toolbar margin */
+.fc-header-toolbar {
+  margin-bottom: 1.5rem !important;
+  padding: 0 0.25rem !important;
+}
+
+/* Scrollbar */
+.fc-scroller::-webkit-scrollbar {
+  width: 4px !important;
+}
+.fc-scroller::-webkit-scrollbar-thumb {
+  background: var(--border-main) !important;
+  border-radius: 10px !important;
+}

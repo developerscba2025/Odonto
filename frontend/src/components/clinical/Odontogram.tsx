@@ -1,151 +1,179 @@
 import React from 'react';
-import { Badge } from '../ui/Badge';
+
+export type ToothFace = 'T' | 'B' | 'L' | 'R' | 'C' | 'W';
+
+export interface ToothState {
+  T?: string; 
+  B?: string; 
+  L?: string; 
+  R?: string; 
+  C?: string; 
+  W?: string; 
+}
 
 interface ToothProps {
   number: number;
-  status: string;
-  onClick: (number: number) => void;
+  state: ToothState;
+  onFaceClick: (number: number, face: ToothFace) => void;
 }
 
-const Tooth = ({ number, status, onClick }: ToothProps) => {
-  const getStatusStyles = (s: string) => {
-    switch (s) {
-      case 'CARIES': 
-        return {
-          fill: 'url(#gradient-red)',
-          stroke: '#ef4444',
-          shadow: 'shadow-[0_0_15px_rgba(239,68,68,0.3)]',
-          glow: 'bg-red-500/10'
-        };
-      case 'REPAIR': 
-        return {
-          fill: 'url(#gradient-blue)',
-          stroke: '#3b82f6',
-          shadow: 'shadow-[0_0_15px_rgba(59,130,246,0.3)]',
-          glow: 'bg-blue-500/10'
-        };
-      case 'EXTRACTION': 
-        return {
-          fill: 'rgba(71, 85, 105, 0.1)',
-          stroke: '#475569',
-          shadow: 'opacity-20 grayscale',
-          glow: 'bg-slate-500/5'
-        };
-      case 'HEALTHY': 
-        return {
-          fill: 'url(#gradient-white)',
-          stroke: '#10b981',
-          shadow: 'shadow-[0_0_10px_rgba(16,185,129,0.1)]',
-          glow: 'bg-emerald-500/5'
-        };
-      default: 
-        return {
-          fill: 'rgba(255,255,255,0.05)',
-          stroke: '#334155',
-          shadow: '',
-          glow: ''
-        };
-    }
-  };
+const getFaceColor = (s?: string) => {
+  switch (s) {
+    case 'CARIES': return '#ef4444'; // Red
+    case 'REPAIR': return '#3b82f6'; // Blue
+    case 'EXTRACTION': return '#475569'; // Slate
+    case 'SEALANT': return '#10b981'; // Green
+    default: return 'transparent';
+  }
+};
 
-  const styles = getStatusStyles(status);
+const Tooth = ({ number, state, onFaceClick }: ToothProps) => {
+  // If whole tooth is extracted, grayscale it
+  const isExtracted = state.W === 'EXTRACTION';
 
   return (
-    <div 
-      onClick={() => onClick(number)}
-      className={`flex flex-col items-center cursor-pointer group transition-all duration-300 relative p-1 rounded-xl ${styles.glow} hover:scale-110`}
-    >
-      <span className="text-[9px] font-black text-text-muted group-hover:text-blue-500 transition-colors uppercase tracking-widest">{number}</span>
+    <div className={`flex flex-col items-center group transition-all relative p-0.5 rounded ${isExtracted ? 'opacity-30 grayscale' : 'hover:scale-105'}`}>
+      <span className="text-[9px] font-black text-text-muted mb-0.5 select-none">{number}</span>
       
-      <svg width="34" height="44" viewBox="0 0 34 44" className={`mt-1 transition-all duration-500 ${styles.shadow}`}>
+      {/* 5-faces SVG: T: top, B: bottom, L: left, R: right, C: center */}
+      <svg width="34" height="34" viewBox="0 0 34 34" className="cursor-pointer">
         <defs>
-          <linearGradient id="gradient-red" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#ef4444" />
-            <stop offset="100%" stopColor="#991b1b" />
-          </linearGradient>
-          <linearGradient id="gradient-blue" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#3b82f6" />
-            <stop offset="100%" stopColor="#1d4ed8" />
-          </linearGradient>
-          <linearGradient id="gradient-white" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#f8fafc" />
-            <stop offset="100%" stopColor="#cbd5e1" />
-          </linearGradient>
+          <radialGradient id="grad-c" cx="50%" cy="50%" r="50%">
+             <stop offset="70%" stopColor={getFaceColor(state.C)} stopOpacity={state.C ? 1 : 0} />
+             <stop offset="100%" stopColor="#273548" stopOpacity={0.2} />
+          </radialGradient>
         </defs>
-        <path 
-          d="M6 12 Q17 2 28 12 L28 32 Q17 42 6 32 Z" 
-          fill={styles.fill}
-          stroke={styles.stroke}
-          strokeWidth="2"
-          className="transition-all duration-500"
-        />
-        {status === 'CARIES' && (
-           <circle cx="17" cy="22" r="5" fill="black" opacity="0.2" className="animate-pulse" />
+
+        {/* Global wrapper for extraction cross */}
+        <g>
+          {/* L: Left Face */}
+          <polygon 
+            points="0,0 10,10 10,24 0,34" 
+            fill={getFaceColor(state.L)}
+            stroke="#1e293b" strokeWidth="1"
+            className="hover:fill-blue-500/30 hover:stroke-blue-500 transition-colors"
+            onClick={() => onFaceClick(number, 'L')}
+          />
+          {/* R: Right Face */}
+          <polygon 
+            points="34,0 24,10 24,24 34,34" 
+            fill={getFaceColor(state.R)}
+            stroke="#1e293b" strokeWidth="1"
+            className="hover:fill-blue-500/30 hover:stroke-blue-500 transition-colors"
+            onClick={() => onFaceClick(number, 'R')}
+          />
+          {/* T: Top Face */}
+          <polygon 
+            points="0,0 34,0 24,10 10,10" 
+            fill={getFaceColor(state.T)}
+            stroke="#1e293b" strokeWidth="1"
+            className="hover:fill-blue-500/30 hover:stroke-blue-500 transition-colors"
+            onClick={() => onFaceClick(number, 'T')}
+          />
+          {/* B: Bottom Face */}
+          <polygon 
+            points="0,34 34,34 24,24 10,24" 
+            fill={getFaceColor(state.B)}
+            stroke="#1e293b" strokeWidth="1"
+            className="hover:fill-blue-500/30 hover:stroke-blue-500 transition-colors"
+            onClick={() => onFaceClick(number, 'B')}
+          />
+          {/* C: Center Face */}
+          <polygon 
+            points="10,10 24,10 24,24 10,24" 
+            fill={state.C ? getFaceColor(state.C) : 'url(#grad-c)'}
+            stroke="#1e293b" strokeWidth="1"
+            className="hover:fill-blue-500/30 hover:stroke-blue-500 transition-colors"
+            onClick={() => onFaceClick(number, 'C')}
+          />
+        </g>
+
+        {isExtracted && (
+          <g className="pointer-events-none stroke-slate-500" strokeWidth="3">
+            <line x1="0" y1="0" x2="34" y2="34" />
+            <line x1="34" y1="0" x2="0" y2="34" />
+          </g>
+        )}
+        
+        {state.W === 'CROWN' && (
+          <circle cx="17" cy="17" r="14" fill="transparent" stroke="#3b82f6" strokeWidth="3" className="pointer-events-none" />
         )}
       </svg>
       
-      {/* Suggestion Tooltip (Simplified for now) */}
-      {status === 'CARIES' && (
-        <div className="absolute -top-6 bg-red-600 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-          SUGERENCIA: RESINA
-        </div>
-      )}
+      {/* Botón para acción total (Extracción/Corona) */}
+      <button 
+        onClick={() => onFaceClick(number, 'W')}
+        className="mt-1 text-[7px] font-black uppercase text-text-muted hover:text-white px-1.5 py-0.5 rounded bg-bg-surface border border-border-main"
+      >
+        Diente
+      </button>
     </div>
   );
 };
 
 interface OdontogramProps {
-  data: Record<number, string>;
-  onToothClick: (number: number) => void;
+  data: Record<number, string>; // The string is JSON.stringify(ToothState)
+  onFaceClick: (number: number, face: ToothFace) => void;
 }
 
-export default function Odontogram({ data, onToothClick }: OdontogramProps) {
-  const upperRight = [18, 17, 16, 15, 14, 13, 12, 11];
-  const upperLeft = [21, 22, 23, 24, 25, 26, 27, 28];
-  const lowerLeft = [31, 32, 33, 34, 35, 36, 37, 38];
-  const lowerRight = [48, 47, 46, 45, 44, 43, 42, 41];
+export default function Odontogram({ data, onFaceClick }: OdontogramProps) {
+  // Adult teeth
+  const topAdultLeft = [18, 17, 16, 15, 14, 13, 12, 11];
+  const topAdultRight = [21, 22, 23, 24, 25, 26, 27, 28];
+  const bottomAdultLeft = [48, 47, 46, 45, 44, 43, 42, 41];
+  const bottomAdultRight = [31, 32, 33, 34, 35, 36, 37, 38];
+
+  // Kids teeth
+  const topKidLeft = [55, 54, 53, 52, 51];
+  const topKidRight = [61, 62, 63, 64, 65];
+  const bottomKidLeft = [85, 84, 83, 82, 81];
+  const bottomKidRight = [71, 72, 73, 74, 75];
+
+  const renderQuadrant = (teeth: number[]) => (
+    <div className="flex gap-1 sm:gap-2">
+      {teeth.map(num => {
+        let state: ToothState = {};
+        if (data[num]) {
+          try {
+            // Check if string is legacy vs JSON
+            if (data[num].startsWith('{')) {
+              state = JSON.parse(data[num]);
+            } else {
+              state = { W: data[num] };
+            }
+          } catch(e) {}
+        }
+        return <Tooth key={num} number={num} state={state} onFaceClick={onFaceClick} />;
+      })}
+    </div>
+  );
 
   return (
-    <div className="bg-bg-main/30 p-10 rounded-[2.5rem] border border-border-main/50 shadow-inner overflow-x-auto relative">
-      {/* Background decoration */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/5 blur-[80px] rounded-full pointer-events-none" />
-
-      <div className="min-w-[700px] flex flex-col gap-10 relative">
-        {/* Upper Arch */}
-        <div className="flex justify-center gap-6">
-          <div className="flex gap-2.5">
-            {upperRight.map(n => <Tooth key={n} number={n} status={data[n] || 'HEALTHY'} onClick={onToothClick} />)}
-          </div>
-          <div className="w-[1px] bg-border-main/50 mx-2 self-stretch"></div>
-          <div className="flex gap-2.5">
-            {upperLeft.map(n => <Tooth key={n} number={n} status={data[n] || 'HEALTHY'} onClick={onToothClick} />)}
-          </div>
-        </div>
-
-        {/* Mid Divider */}
-        <div className="h-[1px] bg-border-main/30 w-full relative">
-           <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-bg-surface px-6 py-1 border border-border-main/50 rounded-full text-[9px] font-black text-text-muted uppercase tracking-[0.3em] backdrop-blur-xl">
-              Plano de Oclusión
-           </div>
-        </div>
-
-        {/* Lower Arch */}
-        <div className="flex justify-center gap-6">
-          <div className="flex gap-2.5">
-            {lowerRight.reverse().map(n => <Tooth key={n} number={n} status={data[n] || 'HEALTHY'} onClick={onToothClick} />)}
-          </div>
-          <div className="w-[1px] bg-border-main/50 mx-2 self-stretch"></div>
-          <div className="flex gap-2.5">
-            {lowerLeft.map(n => <Tooth key={n} number={n} status={data[n] || 'HEALTHY'} onClick={onToothClick} />)}
-          </div>
-        </div>
+    <div className="w-full bg-bg-main/30 border border-border-main/50 rounded-[2rem] p-4 sm:p-8 flex flex-col items-center gap-8 overflow-x-auto shadow-inner">
+      {/* Selector de Herramienta Global? En esta versión los clics ciclan por estados en el contenedor padre */}
+      
+      {/* Top Adult */}
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-10 items-center justify-center border-b-2 border-border-main/30 pb-4">
+        {renderQuadrant(topAdultLeft)}
+        {renderQuadrant(topAdultRight)}
+      </div>
+      
+      {/* Top Kids */}
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center justify-center opacity-80 scale-90 -my-4">
+        {renderQuadrant(topKidLeft)}
+        {renderQuadrant(topKidRight)}
+      </div>
+      
+      {/* Bottom Kids */}
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center justify-center opacity-80 scale-90 -my-4">
+        {renderQuadrant(bottomKidLeft)}
+        {renderQuadrant(bottomKidRight)}
       </div>
 
-      <div className="mt-12 flex flex-wrap justify-center gap-4 border-t border-border-main/30 pt-8">
-        <Badge variant="emerald">Sano</Badge>
-        <Badge variant="red">Caries / Infección</Badge>
-        <Badge variant="blue">Restauración / Perno</Badge>
-        <Badge variant="slate">Ausente / Extraído</Badge>
+      {/* Bottom Adult */}
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-10 items-center justify-center border-t-2 border-border-main/30 pt-4">
+        {renderQuadrant(bottomAdultLeft)}
+        {renderQuadrant(bottomAdultRight)}
       </div>
     </div>
   );

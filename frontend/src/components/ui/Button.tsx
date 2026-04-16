@@ -12,10 +12,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = '', variant = 'primary', size = 'md', icon: Icon, isLoading, children, disabled, ...props }, ref) => {
     
     const variants = {
-      primary: 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-[0.98]',
-      secondary: 'bg-[#1e293b] text-text-main border border-white/5 hover:bg-[#334155] active:scale-[0.98]',
-      ghost: 'bg-transparent text-text-muted hover:text-text-main hover:bg-white/5',
-      danger: 'bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 active:scale-[0.98]'
+      primary: 'bg-gradient-to-tr from-blue-700 to-indigo-700 border border-blue-500/30 text-white hover:from-blue-600 hover:to-indigo-600 shadow-[0_0_15px_rgba(59,130,246,0.3)] active:scale-[0.98]',
+      secondary: 'bg-bg-surface text-text-main border border-border-main hover:bg-border-main/50 hover:border-border-main shadow-xl shadow-black/20 active:scale-[0.98]',
+      ghost: 'bg-transparent text-text-muted hover:text-text-main hover:bg-bg-surface border border-transparent active:scale-[0.98]',
+      danger: 'bg-gradient-to-tr from-rose-950/30 to-red-950/30 border border-rose-500/30 text-rose-400 hover:from-rose-600 hover:to-red-600 hover:text-white shadow-lg shadow-rose-900/20 active:scale-[0.98]'
     };
 
     const sizes = {

@@ -37,11 +37,11 @@ export const Modal = ({ isOpen, onClose, title, subtitle, children }: ModalProps
       />
       
       {/* Modal Content */}
-      <div className="relative w-full max-w-lg bg-[#0f172a] rounded-[2.5rem] border border-[#1e293b] shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300">
+      <div className="relative w-full max-w-lg bg-bg-surface rounded-[2.5rem] border border-border-main shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300">
         {/* Header */}
-        <div className="px-8 py-6 border-b border-[#1e293b] bg-black/20 flex justify-between items-center">
+        <div className="px-8 py-6 border-b border-border-main bg-bg-main/20 flex justify-between items-center">
           <div>
-            <h2 className="text-xl font-black text-text-main tracking-tight">{title}</h2>
+            <h2 className="text-xl font-black text-text-main tracking-tight uppercase">{title}</h2>
             {subtitle && (
               <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-1 opacity-60">
                 {subtitle}
