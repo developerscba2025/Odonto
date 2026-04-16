@@ -2,33 +2,60 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './store/AuthContext';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Agenda from './pages/Agenda';
+import Patients from './pages/Patients';
+import ClinicalRecord from './pages/ClinicalRecord';
+import Settings from './pages/Settings';
 
-function DashboardInfo() {
-  return (
-    <div className="p-10 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400 h-full">
-      <h2 className="text-2xl font-semibold mb-2 text-slate-800">Bienvenido a DentalFlow</h2>
-      <p>Selecciona una opción del menú lateral para comenzar a gestionar el consultorio.</p>
-    </div>
-  );
-}
+import { ThemeProvider } from './store/ThemeContext';
+import { ToastProvider } from './store/ToastContext';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          
-          <Route path="/" element={
-            <ProtectedRoute>
-              <DashboardInfo />
-            </ProtectedRoute>
-          } />
+    <ToastProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Router>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+              <Route path="/agenda" element={
+                <ProtectedRoute>
+                  <Agenda />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/pacientes" element={
+                <ProtectedRoute>
+                  <Patients />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/pacientes/:id" element={
+                <ProtectedRoute>
+                  <ClinicalRecord />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/configuracion" element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              } />
+
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Router>
+        </AuthProvider>
+      </ThemeProvider>
+    </ToastProvider>
   );
 }
 

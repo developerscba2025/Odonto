@@ -8,31 +8,32 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  name          String
-  email         String   @unique
-  passwordHash  String
-  role          String   // ADMIN, DENTIST, RECEPTIONIST
-  
-  appointments  Appointment[]
-  clinicalHist  ClinicalHistory[]
+  id           String            @id @default(uuid())
+  name         String
+  email        String            @unique
+  passwordHash String
+  role         String
+  color        String?
+  appointments Appointment[]
+  clinicalHist ClinicalHistory[]
 }
 
 model Patient {
-  id             String   @id @default(uuid())
+  id             String            @id @default(uuid())
   firstName      String
   lastName       String
-  dni            String   @unique
+  dni            String            @unique
   birthDate      DateTime?
   phone          String?
   email          String?
-  obraSocial     String?  // Texto libre (ej. OSDE, Ninguna)
+  obraSocial     String?
   affiliateNum   String?
-  createdAt      DateTime @default(now())
-
+  isDeleted      Boolean           @default(false)
+  createdAt      DateTime          @default(now())
   appointments   Appointment[]
   clinicalHist   ClinicalHistory[]
   odontograms    Odontogram[]
+  treatmentPlans TreatmentPlan[]
 }
 
 model Appointment {
@@ -40,34 +41,56 @@ model Appointment {
   patientId      String
   professionalId String
   date           DateTime
-  startTime      String   // ej: "10:30"
-  endTime        String   // ej: "11:00"
-  status         String   // PENDING, CONFIRMED, ATTENDED, CANCELLED
+  startTime      String
+  endTime        String
+  status         String
   reason         String?
   notes          String?
-
-  patient        Patient  @relation(fields: [patientId], references: [id])
+  service        String?
   professional   User     @relation(fields: [professionalId], references: [id])
+  patient        Patient  @relation(fields: [patientId], references: [id])
+}
+
+model Attachment {
+  id                String          @id @default(uuid())
+  clinicalHistoryId String
+  type              String
+  url               String
+  description       String?
+  createdAt         DateTime        @default(now())
+  clinicalHistory   ClinicalHistory @relation(fields: [clinicalHistoryId], references: [id])
+}
+
+model TreatmentPlan {
+  id          String   @id @default(uuid())
+  patientId   String
+  description String
+  budget      Float?
+  status      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  patient     Patient  @relation(fields: [patientId], references: [id])
 }
 
 model ClinicalHistory {
-  id             String   @id @default(uuid())
-  patientId      String
-  professionalId String
-  date           DateTime @default(now())
-  description    String
-  attachments    String?  // Ej: URLs / referencias a archivos
-
-  patient        Patient  @relation(fields: [patientId], references: [id])
-  professional   User     @relation(fields: [professionalId], references: [id])
+  id                String       @id @default(uuid())
+  patientId         String
+  professionalId    String
+  date              DateTime     @default(now())
+  description       String
+  attachments       Attachment[]
+  professional      User         @relation(fields: [professionalId], references: [id])
+  patient           Patient      @relation(fields: [patientId], references: [id])
+  odontogramEntries Odontogram[]
 }
 
 model Odontogram {
-  id             String   @id @default(uuid())
-  patientId      String
-  toothNumber    Int
-  status         String   // CARIES, REPAIR, EXTRACTION...
-  notes          String?
-
-  patient        Patient  @relation(fields: [patientId], references: [id])
+  id                String           @id @default(uuid())
+  patientId         String
+  clinicalHistoryId String?
+  toothNumber       Int
+  status            String
+  notes             String?
+  clinicalHistory   ClinicalHistory? @relation(fields: [clinicalHistoryId], references: [id])
+  patient           Patient          @relation(fields: [patientId], references: [id])
 }

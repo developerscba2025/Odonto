@@ -45,10 +45,10 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50 overflow-hidden flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans relative">
+    <div className="min-h-screen bg-bg-main overflow-hidden flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans relative transition-colors duration-500">
       {/* Background Decorative Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-200/40 rounded-full blur-[120px]"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-200/40 rounded-full blur-[120px]"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 dark:bg-blue-600/5 rounded-full blur-[120px]"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 dark:bg-indigo-600/5 rounded-full blur-[120px]"></div>
       
       <div className="relative sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
@@ -56,16 +56,16 @@ export default function Login() {
             <Smile className="w-10 h-10" />
           </div>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900 tracking-tight">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-text-main tracking-tight">
           DentalFlow
         </h2>
-        <p className="mt-2 text-center text-sm text-slate-500">
+        <p className="mt-2 text-center text-sm text-text-muted">
           Ingresa a la plataforma de gestión clínica
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative">
-        <div className="bg-white/80 backdrop-blur-xl py-8 px-4 shadow-2xl shadow-slate-200 sm:rounded-3xl sm:px-10 border border-white/50">
+        <div className="bg-bg-surface/80 backdrop-blur-xl py-8 px-4 shadow-2xl shadow-slate-200 dark:shadow-none sm:rounded-3xl sm:px-10 border border-border-main">
           <form className="space-y-6" onSubmit={handleSubmit}>
             
             {error && (
@@ -76,12 +76,12 @@ export default function Login() {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="email" className="block text-sm font-medium text-text-main">
                 Correo Electrónico
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-slate-400" />
+                  <Mail className="h-5 w-5 text-text-muted" />
                 </div>
                 <input
                   id="email"
@@ -91,19 +91,19 @@ export default function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-xl py-3 border bg-slate-50"
+                  className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-border-main rounded-xl py-3 border bg-bg-main text-text-main"
                   placeholder="doctor@dentalflow.com"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="password" className="block text-sm font-medium text-text-main">
                 Contraseña
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-slate-400" />
+                  <Lock className="h-5 w-5 text-text-muted" />
                 </div>
                 <input
                   id="password"
@@ -113,7 +113,7 @@ export default function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-xl py-3 border bg-slate-50"
+                  className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-border-main rounded-xl py-3 border bg-bg-main text-text-main"
                   placeholder="••••••••"
                 />
               </div>
