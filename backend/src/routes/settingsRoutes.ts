@@ -6,6 +6,6 @@ import { getClinicSettings, updateClinicSettings } from '../controllers/settings
 const router = Router();
 
 router.get('/clinic', authenticateJWT, getClinicSettings);
-router.put('/clinic', authenticateJWT, requireRole(['ADMIN']), updateClinicSettings);
+router.put('/clinic', authenticateJWT, requireRole('ADMIN'), updateClinicSettings);
 
 export default router;

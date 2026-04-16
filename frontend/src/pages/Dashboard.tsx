@@ -54,6 +54,10 @@ interface Stats {
   pendingAppointments: number;
   upcomingAppointments: UpcomingAppointment[];
   showingNextDays?: boolean;
+  clinicSettings?: {
+    openTime: string;
+    closeTime: string;
+  };
 }
 
 export default function Dashboard() {
@@ -63,7 +67,11 @@ export default function Dashboard() {
     appointmentsToday: 0,
     pendingAppointments: 0,
     upcomingAppointments: [],
-    showingNextDays: false
+    showingNextDays: false,
+    clinicSettings: {
+      openTime: '08:00',
+      closeTime: '20:00'
+    }
   });
   const [dailyAlert, setDailyAlert] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -384,8 +392,8 @@ export default function Dashboard() {
                 dayHeaders={false}
                 height="auto"
                 expandRows={true}
-                slotMinTime="07:00:00"
-                slotMaxTime="19:00:00"
+                slotMinTime={`${stats.clinicSettings?.openTime || '08:00'}:00`}
+                slotMaxTime={`${stats.clinicSettings?.closeTime || '20:00'}:00`}
                 slotDuration="00:30:00"
                 slotLabelFormat={{
                   hour: '2-digit',
@@ -411,6 +419,8 @@ export default function Dashboard() {
                   classNames: app.status === 'CANCELLED' ? ['border-2', 'border-dashed', 'opacity-30'] : ['shadow-sm'],
                   extendedProps: { patientId: app.patientId }
                 }))}
+                // Si estamos mostrando próximos días, forzamos al calendario a iniciar en la fecha del primer turno
+                initialDate={stats.upcomingAppointments.length > 0 ? stats.upcomingAppointments[0].date.split('T')[0] : undefined}
                 eventClick={(info) => openQuickSidebar(info.event.extendedProps.patientId, info.event.id)}
               />
             </div>

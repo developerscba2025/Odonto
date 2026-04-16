@@ -16,7 +16,6 @@ model User {
   color        String?
   appointments   Appointment[]
   clinicalHist   ClinicalHistory[]
-  activityLogs   ActivityLog[]
   absences       ProfessionalAbsence[]
 }
 
@@ -109,6 +108,8 @@ model ClinicSettings {
   phone   String?
   address String?
   logoUrl String?
+  openTime String @default("08:00")
+  closeTime String @default("20:00")
 }
 
 model ProfessionalAbsence {
@@ -119,14 +120,4 @@ model ProfessionalAbsence {
   end       DateTime
   reason    String?
   createdAt DateTime @default(now())
-}
-
-model ActivityLog {
-  id         String   @id @default(uuid())
-  action     String
-  entityType String
-  entityId   String?
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
 }

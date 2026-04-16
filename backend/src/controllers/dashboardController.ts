@@ -9,7 +9,7 @@ export const getStats = async (req: Request, res: Response) => {
     const todayEnd = endOfDay(new Date());
     const next7DaysEnd = endOfDay(addDays(new Date(), 7));
 
-    const [patientCount, appointmentsToday, pendingAppointments, todayAppointments] = await prisma.$transaction([
+    const [patientCount, appointmentsToday, pendingAppointments, todayAppointments, clinicSettings] = await prisma.$transaction([
       prisma.patient.count({ where: { isDeleted: false } }),
       prisma.appointment.count({
         where: {
@@ -34,7 +34,8 @@ export const getStats = async (req: Request, res: Response) => {
           patient: { select: { firstName: true, lastName: true } },
           professional: { select: { name: true, color: true } }
         }
-      })
+      }),
+      prisma.clinicSettings.findUnique({ where: { id: 'singleton' } })
     ]);
 
     // Si no hay turnos hoy, buscar los próximos 7 días para el widget
@@ -60,6 +61,7 @@ export const getStats = async (req: Request, res: Response) => {
       appointmentsToday,
       pendingAppointments,
       upcomingAppointments,
+      clinicSettings,
       showingNextDays: todayAppointments.length === 0 && upcomingAppointments.length > 0
     });
 

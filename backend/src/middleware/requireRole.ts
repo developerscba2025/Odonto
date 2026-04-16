@@ -6,12 +6,13 @@ import { AuthRequest } from './auth';
  * Debe usarse DESPUÉS de `authenticateJWT`.
  * @example router.post('/professionals', authenticateJWT, requireRole('ADMIN'), createProfessional);
  */
-export const requireRole = (...roles: string[]) => {
+export const requireRole = (...roles: (string | string[])[]) => {
+  const allowedRoles = roles.flat();
   return (req: AuthRequest, res: Response, next: NextFunction): any => {
     if (!req.user) {
       return res.status(401).json({ error: 'No autenticado' });
     }
-    if (!roles.includes(req.user.role)) {
+    if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({ error: 'No tenés permisos para realizar esta acción' });
     }
     next();

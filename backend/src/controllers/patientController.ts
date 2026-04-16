@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { createPatientSchema } from '../lib/validators';
 import { AuthRequest } from '../middleware/auth';
-import { logActivity } from '../services/activityService';
 
 
 export const getAllPatients = async (req: Request, res: Response) => {
@@ -85,9 +84,6 @@ export const createPatient = async (req: AuthRequest, res: Response): Promise<an
       }
     });
 
-    // Log Activity
-    logActivity(userId, 'PATIENT_CREATE', 'Patient', newPatient.id);
-
     res.status(201).json(newPatient);
   } catch (error: any) {
     if (error.name === 'ZodError') {
@@ -115,9 +111,6 @@ export const updatePatient = async (req: AuthRequest, res: Response) => {
       }
     });
 
-    // Log Activity
-    logActivity(userId, 'PATIENT_UPDATE', 'Patient', id);
-
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: 'Error al actualizar paciente' });
@@ -134,9 +127,6 @@ export const deletePatient = async (req: AuthRequest, res: Response) => {
       where: { id },
       data: { isDeleted: true }
     });
-
-    // Log Activity
-    logActivity(userId, 'PATIENT_ARCHIVE', 'Patient', id);
 
     res.json({ message: 'Paciente archivado correctamente' });
   } catch (error) {

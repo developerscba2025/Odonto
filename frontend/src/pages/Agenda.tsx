@@ -97,6 +97,7 @@ export default function Agenda() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [clinicHours, setClinicHours] = useState({ open: '08:00', close: '20:00' });
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{
@@ -158,11 +159,26 @@ export default function Agenda() {
     }
   }, []);
 
+  const fetchClinicSettings = useCallback(async () => {
+    try {
+      const { data } = await api.get('/settings/clinic');
+      if (data) {
+        setClinicHours({
+          open: data.openTime || '08:00',
+          close: data.closeTime || '20:00'
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching clinic settings:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProfessionals();
     fetchEvents();
     fetchAbsences();
-  }, [fetchProfessionals, fetchEvents, fetchAbsences]);
+    fetchClinicSettings();
+  }, [fetchProfessionals, fetchEvents, fetchAbsences, fetchClinicSettings]);
 
   const toggleProfessional = (id: string) => {
     setSelectedProfIds(prev =>
@@ -383,8 +399,8 @@ export default function Agenda() {
               selectMirror={true}
               dayMaxEvents={true}
               allDaySlot={false}
-              slotMinTime="07:00:00"
-              slotMaxTime="19:30:00"
+              slotMinTime={`${clinicHours.open}:00`}
+              slotMaxTime={`${clinicHours.close}:00`}
               slotDuration="00:30:00"
               snapDuration="00:15:00"
               events={filteredEvents}

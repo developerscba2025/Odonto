@@ -13,7 +13,9 @@ export const ClinicTab = () => {
   const [formData, setFormData] = useState({
     name: 'Nexus Clínica Dental',
     phone: '',
-    address: ''
+    address: '',
+    openTime: '08:00',
+    closeTime: '20:00'
   });
 
   useEffect(() => {
@@ -21,7 +23,13 @@ export const ClinicTab = () => {
       try {
         const { data } = await api.get('/settings/clinic');
         if (data) {
-          setFormData({ name: data.name || '', phone: data.phone || '', address: data.address || '' });
+          setFormData({ 
+            name: data.name || '', 
+            phone: data.phone || '', 
+            address: data.address || '',
+            openTime: data.openTime || '08:00',
+            closeTime: data.closeTime || '20:00'
+          });
         }
       } catch (e) {
         showToast('Error al cargar ajustes de la clínica', 'error');
@@ -63,6 +71,21 @@ export const ClinicTab = () => {
           </div>
           <Button variant="secondary" icon={Upload} size="sm">Seleccionar Imagen</Button>
         </Card>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Input 
+            label="Hora de Apertura"
+            type="time"
+            value={formData.openTime}
+            onChange={(e) => setFormData({...formData, openTime: e.target.value})}
+          />
+          <Input 
+            label="Hora de Cierre"
+            type="time"
+            value={formData.closeTime}
+            onChange={(e) => setFormData({...formData, closeTime: e.target.value})}
+          />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input 

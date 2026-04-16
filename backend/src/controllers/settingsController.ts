@@ -11,10 +11,12 @@ export const getClinicSettings = async (req: Request, res: Response) => {
       settings = await prisma.clinicSettings.create({
         data: {
           id: 'singleton',
-          name: 'DentalFlow Centro Clínico',
+          name: 'Nexus Clínica Dental',
           phone: '',
           address: '',
-          logoUrl: ''
+          logoUrl: '',
+          openTime: '08:00',
+          closeTime: '20:00'
         }
       });
     }
@@ -27,12 +29,12 @@ export const getClinicSettings = async (req: Request, res: Response) => {
 
 export const updateClinicSettings = async (req: Request, res: Response) => {
   try {
-    const { name, phone, address, logoUrl } = req.body;
+    const { name, phone, address, logoUrl, openTime, closeTime } = req.body;
     
     const settings = await prisma.clinicSettings.upsert({
       where: { id: 'singleton' },
-      update: { name, phone, address, logoUrl },
-      create: { id: 'singleton', name, phone, address, logoUrl }
+      update: { name, phone, address, logoUrl, openTime, closeTime },
+      create: { id: 'singleton', name, phone, address, logoUrl, openTime, closeTime }
     });
 
     res.json(settings);

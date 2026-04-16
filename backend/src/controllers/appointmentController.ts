@@ -3,7 +3,6 @@ import { AuthRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
 import { createAppointmentSchema } from '../lib/validators';
 import { notificationService } from '../services/notificationService';
-import { logActivity } from '../services/activityService';
 
 
 export const getAllAppointments = async (req: AuthRequest, res: Response) => {
@@ -86,9 +85,6 @@ export const createAppointment = async (req: AuthRequest, res: Response): Promis
       }
     });
     
-    // Log Activity
-    logActivity(userId, 'CALENDAR_CREATE', 'Appointment', newAppointment.id);
-
     // Notificar por WhatsApp
     notificationService.sendAppointmentConfirmation(newAppointment);
 
@@ -127,9 +123,6 @@ export const updateAppointment = async (req: AuthRequest, res: Response): Promis
       }
     });
 
-    // Log Activity
-    logActivity(userId, 'CALENDAR_UPDATE', 'Appointment', id);
-
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: 'Error al actualizar turno' });
@@ -153,9 +146,6 @@ export const deleteAppointment = async (req: AuthRequest, res: Response): Promis
       where: { id },
       data: { isDeleted: true }
     });
-
-    // Log Activity
-    logActivity(userId, 'CALENDAR_DELETE', 'Appointment', id);
 
     res.json({ message: 'Turno eliminado lógicamente' });
   } catch (error) {

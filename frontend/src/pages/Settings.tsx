@@ -15,10 +15,9 @@ import { ProfileTab } from '../features/settings/ProfileTab';
 import { TeamTab } from '../features/settings/TeamTab';
 import { ClinicTab } from '../features/settings/ClinicTab';
 import { SystemTab } from '../features/settings/SystemTab';
-import { AuditTab } from '../features/settings/AuditTab';
 import { useAuth } from '../store/AuthContext';
 
-type TabType = 'perfil' | 'equipo' | 'clinica' | 'sistema' | 'auditoria';
+type TabType = 'perfil' | 'equipo' | 'clinica' | 'sistema';
 
 export default function Settings() {
   const { user } = useAuth();
@@ -29,7 +28,6 @@ export default function Settings() {
     { id: 'equipo', label: 'Equipo Médico', icon: Users, color: 'text-emerald-500', adminOnly: true },
     { id: 'clinica', label: 'Clínica', icon: Building2, color: 'text-orange-500', adminOnly: true },
     { id: 'sistema', label: 'Sistema', icon: SettingsIcon, color: 'text-purple-500', adminOnly: true },
-    { id: 'auditoria', label: 'Auditoría', icon: SettingsIcon, color: 'text-red-500', adminOnly: true },
   ].filter(tab => !tab.adminOnly || user?.role === 'ADMIN');
 
   return (
@@ -84,7 +82,6 @@ export default function Settings() {
              {activeTab === 'equipo' && <TeamTab />}
              {activeTab === 'clinica' && <ClinicTab />}
              {activeTab === 'sistema' && <SystemTab />}
-             {activeTab === 'auditoria' && <AuditTab />}
           </Card>
         </main>
       </div>

@@ -64,6 +64,9 @@ export const BookingModal = ({ isOpen, onClose, onSuccess, initialData }: Bookin
     professionalId: '',
     serviceId: 'consulta',
     notes: SERVICE_PRESETS[0].note,
+    date: initialData?.date || new Date().toISOString().split('T')[0],
+    startTime: initialData?.startTime || '09:00',
+    endTime: initialData?.endTime || '09:30',
     ...initialData
   });
 
@@ -154,6 +157,11 @@ export const BookingModal = ({ isOpen, onClose, onSuccess, initialData }: Bookin
 
     setIsSubmitting(true);
     try {
+      if (!formData.date || !formData.startTime || !formData.endTime) {
+        setIsSubmitting(false);
+        return showToast('Debes completar fecha y horario', 'warning');
+      }
+
       const selectedPreset = SERVICE_PRESETS.find(p => p.id === formData.serviceId);
       const payload = {
         patientId: selectedPatient.id,
@@ -198,14 +206,39 @@ export const BookingModal = ({ isOpen, onClose, onSuccess, initialData }: Bookin
     });
   };
 
-  return (
+    return (
     <Modal 
       isOpen={isOpen} 
       onClose={onClose} 
       title={initialData?.appointmentId ? "Editar Turno" : "Agendar Nuevo Turno"} 
-      subtitle={`${formData.date} | ${formData.startTime} - ${formData.endTime}`}
+      subtitle={`${formData.date || 'Sin fecha'} | ${formData.startTime || '--:--'} - ${formData.endTime || '--:--'}`}
     >
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Date and Time Selection */}
+        <div className="space-y-3 p-4 bg-bg-main/20 border border-border-main rounded-2xl">
+          <label className="text-[10px] font-black text-text-muted uppercase tracking-wider">Fecha y Horario</label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Input
+              type="date"
+              label="Día"
+              value={formData.date}
+              onChange={e => setFormData({ ...formData, date: e.target.value })}
+            />
+            <Input
+              type="time"
+              label="Desde"
+              value={formData.startTime}
+              onChange={e => setFormData({ ...formData, startTime: e.target.value })}
+            />
+            <Input
+              type="time"
+              label="Hasta"
+              value={formData.endTime}
+              onChange={e => setFormData({ ...formData, endTime: e.target.value })}
+            />
+          </div>
+        </div>
+
         {/* Patient Search / Quick Create */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
