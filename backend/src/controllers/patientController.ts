@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { createPatientSchema } from '../lib/validators';
+import { AuthRequest } from '../middleware/auth';
+import { logActivity } from '../services/activityService';
 
 
 export const getAllPatients = async (req: Request, res: Response) => {
@@ -71,15 +73,21 @@ export const getPatientById = async (req: Request, res: Response): Promise<any> 
   }
 };
 
-export const createPatient = async (req: Request, res: Response): Promise<any> => {
+export const createPatient = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const data = createPatientSchema.parse(req.body);
+    const userId = req.user!.id;
+
     const newPatient = await prisma.patient.create({
       data: {
         ...data,
         birthDate: data.birthDate ? new Date(data.birthDate) : null
       }
     });
+
+    // Log Activity
+    logActivity(userId, 'PATIENT_CREATE', 'Patient', newPatient.id);
+
     res.status(201).json(newPatient);
   } catch (error: any) {
     if (error.name === 'ZodError') {
@@ -93,10 +101,12 @@ export const createPatient = async (req: Request, res: Response): Promise<any> =
   }
 };
 
-export const updatePatient = async (req: Request, res: Response) => {
+export const updatePatient = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const data = req.body;
+    const userId = req.user!.id;
+
     const updated = await prisma.patient.update({
       where: { id },
       data: {
@@ -104,20 +114,30 @@ export const updatePatient = async (req: Request, res: Response) => {
         birthDate: data.birthDate ? new Date(data.birthDate) : undefined
       }
     });
+
+    // Log Activity
+    logActivity(userId, 'PATIENT_UPDATE', 'Patient', id);
+
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: 'Error al actualizar paciente' });
   }
 };
 
-export const deletePatient = async (req: Request, res: Response) => {
+export const deletePatient = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const userId = req.user!.id;
+
     // Implementación de Borrado Lógico (Archivar)
     await prisma.patient.update({
       where: { id },
       data: { isDeleted: true }
     });
+
+    // Log Activity
+    logActivity(userId, 'PATIENT_ARCHIVE', 'Patient', id);
+
     res.json({ message: 'Paciente archivado correctamente' });
   } catch (error) {
     res.status(500).json({ error: 'Error al archivar paciente' });

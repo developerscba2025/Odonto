@@ -12,7 +12,8 @@ import {
   ClipboardList,
   AlertCircle,
   TrendingUp,
-  X
+  X,
+  Eraser
 } from 'lucide-react';
 import api from '../lib/api';
 import Odontogram from '../components/clinical/Odontogram';
@@ -145,23 +146,42 @@ export default function ClinicalRecord() {
     fetchData();
   }, [fetchData]);
 
-  const handleFaceClick = (number: number, face: any) => { // face is type ToothFace
-    const statuses = ['', 'CARIES', 'REPAIR', 'SEALANT', 'EXTRACTION'];
+  const [activeTool, setActiveTool] = useState<string | null>(null);
+
+  const handleFaceClick = (number: number, face: any) => { 
+    if (!activeTool) {
+      showToast('Selecciona una herramienta clínica (arriba del odontograma) antes de interactuar.', 'info');
+      return;
+    }
     
-    // Parse curr state
     const currStr = currentOdontogram[number] || '{}';
     let state: any = {};
     if (currStr.startsWith('{')) {
       try { state = JSON.parse(currStr); } catch(e) {}
     } else {
-      state = { W: currStr };
+      if (currStr) state = { W: currStr };
     }
 
-    const currentStatus = state[face] || '';
-    const nextIndex = (statuses.indexOf(currentStatus) + 1) % statuses.length;
-    state[face] = statuses[nextIndex];
-    
-    if (!state[face]) delete state[face]; // clear empty
+    if (activeTool === 'ERASE') {
+       if (face === 'W') {
+         state = {}; // Borrar todo el diente
+       } else {
+         delete state[face]; // Borrar solo la cara
+       }
+    } else if (activeTool === 'EXTRACTION' || activeTool === 'CROWN') {
+       if (state.W === activeTool) {
+         delete state.W; // Toggle off
+       } else {
+         state = { W: activeTool }; // Aplica a todo el diente, borra lo demás
+       }
+    } else {
+       const targetFace = face === 'W' ? 'C' : face; // Si clica el botón Opción teniendo "Caries", aplica al Centro 
+       if (state[targetFace] === activeTool) {
+         delete state[targetFace];
+       } else {
+         state[targetFace] = activeTool;
+       }
+    }
 
     setCurrentOdontogram({
       ...currentOdontogram,
@@ -358,6 +378,66 @@ export default function ClinicalRecord() {
                 {tab === 'evoluciones' ? 'Evoluciones' : tab === 'planes' ? 'Planes' : 'Galería'}
               </button>
             ))}
+          </div>
+
+          {/* Toolbar de Herramientas del Odontograma */}
+          <div className="flex flex-wrap items-center gap-2 p-3 bg-bg-surface rounded-2xl border border-border-main shadow-sm w-full">
+            <span className="text-[10px] font-black text-text-muted uppercase tracking-widest mr-2 ml-1">Herramienta:</span>
+            
+            <button 
+              onClick={() => setActiveTool(activeTool === 'CARIES' ? null : 'CARIES')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
+                activeTool === 'CARIES' ? 'bg-red-500/10 border-red-500 text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 'bg-bg-main border-border-main/50 text-text-muted hover:border-red-500/50'
+              }`}
+            >
+              Caries
+            </button>
+            <button 
+              onClick={() => setActiveTool(activeTool === 'REPAIR' ? null : 'REPAIR')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
+                activeTool === 'REPAIR' ? 'bg-blue-500/10 border-blue-500 text-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.2)]' : 'bg-bg-main border-border-main/50 text-text-muted hover:border-blue-500/50'
+              }`}
+            >
+              Restauración
+            </button>
+            <button 
+              onClick={() => setActiveTool(activeTool === 'SEALANT' ? null : 'SEALANT')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
+                activeTool === 'SEALANT' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.2)]' : 'bg-bg-main border-border-main/50 text-text-muted hover:border-emerald-500/50'
+              }`}
+            >
+              Sellador
+            </button>
+            
+            <div className="w-px h-6 bg-border-main/50 mx-1" />
+
+            <button 
+              onClick={() => setActiveTool(activeTool === 'EXTRACTION' ? null : 'EXTRACTION')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
+                activeTool === 'EXTRACTION' ? 'bg-slate-500/10 border-slate-500 text-slate-500 shadow-[0_0_10px_rgba(100,116,139,0.2)]' : 'bg-bg-main border-border-main/50 text-text-muted hover:border-slate-500/50'
+              }`}
+            >
+              Extracción
+            </button>
+            <button 
+              onClick={() => setActiveTool(activeTool === 'CROWN' ? null : 'CROWN')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
+                activeTool === 'CROWN' ? 'bg-amber-500/10 border-amber-500 text-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'bg-bg-main border-border-main/50 text-text-muted hover:border-amber-500/50'
+              }`}
+            >
+              Corona
+            </button>
+            
+            <div className="w-px h-6 bg-border-main/50 mx-1 flex-1" />
+
+            <button 
+              onClick={() => setActiveTool(activeTool === 'ERASE' ? null : 'ERASE')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg border flex items-center gap-1 transition-all ${
+                activeTool === 'ERASE' ? 'bg-text-main text-bg-main border-text-main shadow-[0_0_10px_rgba(255,255,255,0.2)]' : 'bg-bg-main border-border-main/50 text-text-muted hover:border-text-main/50'
+              }`}
+            >
+              <Eraser className="w-3.5 h-3.5" /> Borrador
+            </button>
           </div>
 
           {/* Odontograma */}

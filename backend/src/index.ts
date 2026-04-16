@@ -8,6 +8,8 @@ import dashboardRoutes from './routes/dashboardRoutes';
 import clinicalRoutes from './routes/clinicalRoutes';
 import mediaRoutes from './routes/mediaRoutes';
 import settingsRoutes from './routes/settingsRoutes';
+import absenceRoutes from './routes/absenceRoutes';
+import activityRoutes from './routes/activityRoutes';
 import { notificationService } from './services/notificationService';
 import { whatsappService } from './services/whatsappService';
 import { authenticateJWT } from './middleware/auth';
@@ -44,6 +46,8 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/clinical', clinicalRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/absences', absenceRoutes);
+app.use('/api/activities', activityRoutes);
 
 // WhatsApp Routes
 app.get('/api/whatsapp/status', authenticateJWT, (req, res) => {

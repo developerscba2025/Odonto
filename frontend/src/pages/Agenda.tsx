@@ -91,6 +91,7 @@ const EventContextMenu = ({ event, position, onEdit, onDelete, onClose }: EventM
 export default function Agenda() {
   const { showToast } = useToast();
   const [events, setEvents] = useState<any[]>([]);
+  const [absences, setAbsences] = useState<any[]>([]);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [selectedProfIds, setSelectedProfIds] = useState<string[]>([]);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -139,10 +140,29 @@ export default function Agenda() {
     }
   }, [showToast]);
 
+  const fetchAbsences = useCallback(async () => {
+    try {
+      const { data } = await api.get('/absences');
+      const formattedAbsences = data.map((abs: any) => ({
+        id: `abs_${abs.id}`,
+        title: abs.reason || 'Licencia',
+        start: abs.start.split('T')[0],
+        end: abs.end.split('T')[0],
+        display: 'background',
+        backgroundColor: '#ef4444',
+        professionalId: abs.userId
+      }));
+      setAbsences(formattedAbsences);
+    } catch (error) {
+      console.error('Error fetching absences:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProfessionals();
     fetchEvents();
-  }, [fetchProfessionals, fetchEvents]);
+    fetchAbsences();
+  }, [fetchProfessionals, fetchEvents, fetchAbsences]);
 
   const toggleProfessional = (id: string) => {
     setSelectedProfIds(prev =>
@@ -153,9 +173,10 @@ export default function Agenda() {
   const selectAll = () => setSelectedProfIds(professionals.map(p => p.id));
   const selectNone = () => setSelectedProfIds([]);
 
-  const filteredEvents = events.filter(event =>
-    selectedProfIds.includes(event.professionalId)
-  );
+  const filteredEvents = [
+    ...events.filter(event => selectedProfIds.includes(event.professionalId)),
+    ...absences.filter(abs => selectedProfIds.includes(abs.professionalId))
+  ];
 
   // ---- Handlers ----
 

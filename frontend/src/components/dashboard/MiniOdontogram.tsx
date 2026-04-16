@@ -8,13 +8,34 @@ const STATUS_COLORS: Record<string, string> = {
   HEALTHY: 'bg-transparent border border-border-main/50',
   CARIES: 'bg-red-500 shadow-md shadow-red-500/20 border-red-500',
   REPAIR: 'bg-blue-500 shadow-md shadow-blue-500/20 border-blue-500',
+  CROWN: 'bg-transparent border-2 border-blue-500', 
+  SEALANT: 'bg-emerald-500 shadow-md shadow-emerald-500/20 border-emerald-500',
   EXTRACTION: 'bg-zinc-800 shadow-md shadow-zinc-800/20 border-zinc-700',
 };
 
 const getStatusColor = (number: number, entries: { toothNumber: number; status: string }[]) => {
   const entry = entries.find(e => e.toothNumber === number);
   if (!entry) return STATUS_COLORS.HEALTHY;
-  return STATUS_COLORS[entry.status] || STATUS_COLORS.HEALTHY;
+  
+  let stateStr = entry.status;
+  if (!stateStr) return STATUS_COLORS.HEALTHY;
+  
+  let stateObj: Record<string, string> = {};
+  if (stateStr.startsWith('{')) {
+    try { stateObj = JSON.parse(stateStr); } catch(e) {}
+  } else {
+    stateObj = { W: stateStr };
+  }
+  
+  const vals = Object.values(stateObj);
+  
+  if (stateObj.W === 'EXTRACTION') return STATUS_COLORS.EXTRACTION;
+  if (vals.includes('CARIES')) return STATUS_COLORS.CARIES;
+  if (stateObj.W === 'CROWN') return STATUS_COLORS.CROWN;
+  if (vals.includes('REPAIR')) return STATUS_COLORS.REPAIR;
+  if (vals.includes('SEALANT')) return STATUS_COLORS.SEALANT;
+  
+  return STATUS_COLORS.HEALTHY;
 };
 
 // Generates an array from start to end (inclusive)
@@ -70,6 +91,8 @@ export const MiniOdontogram: React.FC<MiniOdontogramProps> = ({ entries }) => {
          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full border border-border-main/50"></div> Sana</div>
          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500"></div> Caries</div>
          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Reparada</div>
+         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full border border-blue-500"></div> Corona</div>
+         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Sellador</div>
          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-zinc-800"></div> Ausente</div>
       </div>
     </div>

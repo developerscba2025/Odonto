@@ -14,8 +14,10 @@ model User {
   passwordHash String
   role         String
   color        String?
-  appointments Appointment[]
-  clinicalHist ClinicalHistory[]
+  appointments   Appointment[]
+  clinicalHist   ClinicalHistory[]
+  activityLogs   ActivityLog[]
+  absences       ProfessionalAbsence[]
 }
 
 model Patient {
@@ -107,4 +109,24 @@ model ClinicSettings {
   phone   String?
   address String?
   logoUrl String?
+}
+
+model ProfessionalAbsence {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  start     DateTime
+  end       DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  action     String
+  entityType String
+  entityId   String?
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
 }
