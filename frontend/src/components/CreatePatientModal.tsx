@@ -1,43 +1,66 @@
-import React, { useState, useEffect } from 'react';
-import { User, Fingerprint, Phone, Shield, Check, Mail, Building2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { User, Fingerprint, Phone, Shield, Check, Mail } from 'lucide-react';
 import api from '../lib/api';
 import { useToast } from '../store/ToastContext';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
 // UI Atoms
 import { Modal } from './ui/Modal';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 
+// Validation Schema with Zod
+const patientSchema = z.object({
+  firstName: z.string().min(2, 'El nombre debe tener al menos 2 letras'),
+  lastName: z.string().min(2, 'El apellido debe tener al menos 2 letras'),
+  dni: z.string().min(7, 'DNI no válido').max(10, 'DNI no válido'),
+  phone: z.string().optional().nullable(),
+  email: z.string().email('Email no válido').optional().or(z.literal('')).nullable(),
+  obraSocial: z.string().optional().nullable(),
+  affiliateNum: z.string().optional().nullable(),
+  birthDate: z.string().optional().nullable(),
+});
+
+export type PatientData = z.infer<typeof patientSchema> & { id?: string };
+
 interface CreatePatientModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  initialData?: any; // To populate form for editing
+  initialData?: PatientData | null; // To populate form for editing
 }
-
-const EMPTY_FORM = {
-  firstName: '',
-  lastName: '',
-  dni: '',
-  phone: '',
-  email: '',
-  obraSocial: '',
-  affiliateNum: '',
-  birthDate: ''
-};
 
 export default function CreatePatientModal({ isOpen, onClose, onSuccess, initialData }: CreatePatientModalProps) {
   const { showToast } = useToast();
-  const [formData, setFormData] = useState(EMPTY_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const isEditing = !!initialData;
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors }
+  } = useForm<PatientData>({
+    resolver: zodResolver(patientSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      dni: '',
+      phone: '',
+      email: '',
+      obraSocial: '',
+      affiliateNum: '',
+      birthDate: ''
+    }
+  });
 
   // Re-populate form whenever modal opens or initialData changes
   useEffect(() => {
     if (!isOpen) return;
     if (initialData) {
-      setFormData({
+      reset({
         firstName: initialData.firstName || '',
         lastName: initialData.lastName || '',
         dni: initialData.dni || '',
@@ -48,46 +71,51 @@ export default function CreatePatientModal({ isOpen, onClose, onSuccess, initial
         birthDate: initialData.birthDate ? initialData.birthDate.split('T')[0] : ''
       });
     } else {
-      setFormData(EMPTY_FORM);
+      reset({
+        firstName: '',
+        lastName: '',
+        dni: '',
+        phone: '',
+        email: '',
+        obraSocial: '',
+        affiliateNum: '',
+        birthDate: ''
+      });
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, reset]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: PatientData) => {
     setIsSubmitting(true);
     try {
       const payload = {
-        ...formData,
-        birthDate: formData.birthDate || null,
-        phone: formData.phone || null,
-        email: formData.email || null,
-        obraSocial: formData.obraSocial || null,
-        affiliateNum: formData.affiliateNum || null
+        ...data,
+        birthDate: data.birthDate || null,
+        phone: data.phone || null,
+        email: data.email || null,
+        obraSocial: data.obraSocial || null,
+        affiliateNum: data.affiliateNum || null
       };
 
-      if (isEditing) {
+      if (isEditing && initialData?.id) {
         await api.put(`/patients/${initialData.id}`, payload);
         showToast('Paciente actualizado con éxito.', 'success');
       } else {
         await api.post('/patients', payload);
-        showToast(`${formData.firstName} ${formData.lastName} registrado con éxito.`, 'success');
+        showToast(`${data.firstName} ${data.lastName} registrado con éxito.`, 'success');
       }
       onSuccess();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error in patient modal:', error);
+      const backendMessage = error.response?.data?.error;
       showToast(
-        isEditing
-          ? 'Error al actualizar el paciente.'
-          : 'Error al crear el paciente. El DNI podría estar duplicado.',
+        backendMessage || (isEditing ? 'Error al actualizar el paciente.' : 'Error al crear el paciente. Verifique los datos o si el DNI está duplicado.'),
         'error'
       );
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const handleField = (field: keyof typeof EMPTY_FORM) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setFormData(prev => ({ ...prev, [field]: e.target.value }));
 
   return (
     <Modal
@@ -96,42 +124,39 @@ export default function CreatePatientModal({ isOpen, onClose, onSuccess, initial
       title={isEditing ? 'Editar Paciente' : 'Nuevo Paciente'}
       subtitle={isEditing ? `Actualizar ficha: ${initialData?.firstName} ${initialData?.lastName}` : 'Ficha Clínica Integral'}
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {/* Nombre y Apellido */}
         <div className="grid grid-cols-2 gap-4">
           <Input
-            required
             label="Nombre"
             placeholder="Ej: Juan"
             icon={User}
-            value={formData.firstName}
-            onChange={handleField('firstName')}
+            {...register('firstName')}
+            error={errors.firstName?.message}
           />
           <Input
-            required
             label="Apellido"
             placeholder="Ej: Pérez"
             icon={User}
-            value={formData.lastName}
-            onChange={handleField('lastName')}
+            {...register('lastName')}
+            error={errors.lastName?.message}
           />
         </div>
 
         {/* DNI y Fecha de nac */}
         <div className="grid grid-cols-2 gap-4">
           <Input
-            required
             label="DNI"
             placeholder="Ej: 30123456"
             icon={Fingerprint}
-            value={formData.dni}
-            onChange={handleField('dni')}
+            {...register('dni')}
+            error={errors.dni?.message}
           />
           <Input
             label="Fecha de Nacimiento"
             type="date"
-            value={formData.birthDate}
-            onChange={handleField('birthDate')}
+            {...register('birthDate')}
+            error={errors.birthDate?.message}
           />
         </div>
 
@@ -142,16 +167,16 @@ export default function CreatePatientModal({ isOpen, onClose, onSuccess, initial
             placeholder="+54 11 1234 5678"
             type="tel"
             icon={Phone}
-            value={formData.phone}
-            onChange={handleField('phone')}
+            {...register('phone')}
+            error={errors.phone?.message}
           />
           <Input
             label="Email"
             placeholder="paciente@mail.com"
             type="email"
             icon={Mail}
-            value={formData.email}
-            onChange={handleField('email')}
+            {...register('email')}
+            error={errors.email?.message}
           />
         </div>
 
@@ -161,14 +186,14 @@ export default function CreatePatientModal({ isOpen, onClose, onSuccess, initial
             label="Obra Social"
             placeholder="Ej: OSDE, IOMA, Particular"
             icon={Shield}
-            value={formData.obraSocial}
-            onChange={handleField('obraSocial')}
+            {...register('obraSocial')}
+            error={errors.obraSocial?.message}
           />
           <Input
             label="Nº de Afiliado"
             placeholder="Opcional"
-            value={formData.affiliateNum}
-            onChange={handleField('affiliateNum')}
+            {...register('affiliateNum')}
+            error={errors.affiliateNum?.message}
           />
         </div>
 

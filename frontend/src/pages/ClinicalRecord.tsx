@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -6,18 +6,14 @@ import {
   Plus, 
   Clock, 
   FileText, 
-  ChevronRight, 
   Image as ImageIcon, 
-  Stethoscope,
-  ClipboardList,
-  AlertCircle,
-  TrendingUp,
-  X,
   Eraser
 } from 'lucide-react';
 import api from '../lib/api';
 import Odontogram from '../components/clinical/Odontogram';
-import { useRef } from 'react';
+import CreatePlanModal from '../components/clinical/CreatePlanModal';
+import ClinicalTimeline from '../components/clinical/ClinicalTimeline';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // UI Atoms
 import { Card } from '../components/ui/Card';
@@ -27,34 +23,12 @@ import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../store/ToastContext';
 
+import { Patient, Evolution, TreatmentPlan, OdontogramEntry } from '../types/clinical';
+
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 
-interface Evolution {
-  id: string;
-  date: string;
-  description: string;
-  professional: { name: string };
-  odontogramEntries: any[];
-  attachments: any[];
-}
 
-interface TreatmentPlan {
-  id: string;
-  description: string;
-  budget: number | null;
-  status: string;
-  tasks: string; 
-  createdAt: string;
-}
-
-interface Patient {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dni: string;
-  obraSocial: string | null;
-}
 
 const CLINICAL_PRESETS = [
   { label: 'Limpieza', text: 'Se realiza detartraje supra y subgingival con ultrasonido. Pulido coronario con pasta abrasiva.' },
@@ -67,10 +41,7 @@ export default function ClinicalRecord() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  
-  const [patient, setPatient] = useState<Patient | null>(null);
-  const [history, setHistory] = useState<Evolution[]>([]);
-  const [plans, setPlans] = useState<TreatmentPlan[]>([]);
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'evoluciones' | 'planes' | 'galeria'>('evoluciones');
   
   const [currentOdontogram, setCurrentOdontogram] = useState<Record<number, string>>({});
@@ -84,9 +55,6 @@ export default function ClinicalRecord() {
   useEffect(() => { setFileInputRef(internalFileInputRef); }, []);
 
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
-  const [newPlan, setNewPlan] = useState({ description: '', budget: '', tasks: [] as { id: string, desc: string, done: boolean }[] });
-  const [newTaskDesc, setNewTaskDesc] = useState('');
-  
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
 
   const handleApplyPreset = (text: string) => {
@@ -116,35 +84,45 @@ export default function ClinicalRecord() {
     }
   };
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [pRes, hRes, plansRes] = await Promise.all([
-        api.get(`/patients/${id}`),
-        api.get(`/clinical/patient/${id}`),
-        api.get(`/clinical/patient/${id}/plans`)
-      ]);
-      
-      setPatient(pRes.data);
-      setHistory(hRes.data);
-      setPlans(plansRes.data);
+  // 1. Fetching con React Query
+  const { data: patient, isLoading: isPatientLoading } = useQuery<Patient>({
+    queryKey: ['patient', id],
+    queryFn: async () => {
+      const res = await api.get(`/patients/${id}`);
+      return res.data;
+    },
+    enabled: !!id
+  });
 
-      if (hRes.data.length > 0) {
-        const latest = hRes.data[0];
-        const state: Record<number, string> = {};
-        latest.odontogramEntries.forEach((entry: any) => {
-          state[entry.toothNumber] = entry.status;
-        });
-        setCurrentOdontogram(state);
-      }
-    } catch (error) {
-      console.error('Error fetching clinical data:', error);
-      showToast('Error al cargar la historia clínica', 'error');
-    }
-  }, [id, showToast]);
+  const { data: plans = [] } = useQuery<TreatmentPlan[]>({
+    queryKey: ['clinical', id, 'plans'],
+    queryFn: async () => {
+      const res = await api.get(`/clinical/patient/${id}/plans`);
+      return res.data;
+    },
+    enabled: !!id
+  });
 
+  const { data: history = [] } = useQuery<Evolution[]>({
+    queryKey: ['clinical', id, 'history'],
+    queryFn: async () => {
+      const res = await api.get(`/clinical/patient/${id}`);
+      return res.data;
+    },
+    enabled: !!id
+  });
+
+  // Re-sync odontogram state whenever history updates
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (history.length > 0) {
+      const latest = history[0];
+      const state: Record<number, string> = {};
+      latest.odontogramEntries?.forEach((entry: OdontogramEntry) => {
+        state[entry.toothNumber] = entry.status;
+      });
+      setCurrentOdontogram(state);
+    }
+  }, [history]);
 
   const [activeTool, setActiveTool] = useState<string | null>(null);
 
@@ -211,7 +189,7 @@ export default function ClinicalRecord() {
 
       setNewEvolution('');
       setUploadedFiles([]);
-      fetchData();
+      queryClient.invalidateQueries({ queryKey: ['clinical', id] });
       showToast('Evolución médica registrada', 'success');
     } catch (error) {
       showToast('Error al guardar la evolución', 'error');
@@ -220,38 +198,49 @@ export default function ClinicalRecord() {
     }
   };
 
-  const handleUpdatePlanStatus = async (planId: string, currentStatus: string) => {
+  const updatePlanStatusMutation = useMutation({
+    mutationFn: async ({ planId, newStatus }: { planId: string, newStatus: string }) => {
+      return api.put(`/clinical/plans/${planId}`, { status: newStatus });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clinical', id, 'plans'] });
+      showToast('Estado del plan actualizado', 'success');
+    },
+    onError: () => {
+      showToast('Error al actualizar plan', 'error');
+    }
+  });
+
+  const handleUpdatePlanStatus = (planId: string, currentStatus: string) => {
     const statuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED'];
     const nextIndex = (statuses.indexOf(currentStatus) + 1) % statuses.length;
     const newStatus = statuses[nextIndex];
     
-    try {
-      await api.put(`/clinical/plans/${planId}`, { status: newStatus });
-      fetchData();
-      showToast('Estado del plan actualizado', 'success');
-    } catch (error) {
-      showToast('Error al actualizar plan', 'error');
-    }
+    updatePlanStatusMutation.mutate({ planId, newStatus });
   };
 
-  const handleCreatePlan = async () => {
-    try {
-      await api.post('/clinical/plans', {
-        patientId: id,
-        description: newPlan.description,
-        budget: parseFloat(newPlan.budget) || 0,
-        tasks: JSON.stringify(newPlan.tasks)
-      });
-      setIsPlanModalOpen(false);
-      setNewPlan({ description: '', budget: '', tasks: [] });
-      fetchData();
-      showToast('Plan de tratamiento creado', 'success');
-    } catch (error) {
-      showToast('Error al crear el plan', 'error');
+  const updatePlanTaskMutation = useMutation({
+    mutationFn: async ({ planId, newTasks }: { planId: string, newTasks: any[] }) => {
+      return api.put(`/clinical/plans/${planId}`, { tasks: JSON.stringify(newTasks) });
+    },
+    onSuccess: () => {
+      // Invalidate to refresh tasks
+      queryClient.invalidateQueries({ queryKey: ['clinical', id, 'plans'] });
+    },
+    onError: () => {
+      showToast('Error al actualizar tarea', 'error');
     }
+  });
+
+  const handlePlanTaskToggle = (planId: string, taskId: string, allTasksJSON: string) => {
+    let parsedTasks: any[] = [];
+    try { parsedTasks = JSON.parse(allTasksJSON || "[]"); } catch {}
+    
+    const newTasks = parsedTasks.map(t => t.id === taskId ? { ...t, done: !t.done } : t);
+    updatePlanTaskMutation.mutate({ planId, newTasks });
   };
 
-  if (!patient) return (
+  if (isPatientLoading || !patient) return (
     <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
       <div className="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
       <p className="text-xs font-black text-text-muted uppercase tracking-[0.3em]">Cargando Ficha Clínica...</p>
@@ -262,69 +251,14 @@ export default function ClinicalRecord() {
     <div className="space-y-6 animate-in fade-in duration-700 max-w-7xl mx-auto pb-16">
 
       {/* Modal: Nuevo Plan de Tratamiento */}
-      <Modal
-        isOpen={isPlanModalOpen}
-        onClose={() => setIsPlanModalOpen(false)}
-        title="Nuevo Plan de Tratamiento"
-      >
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-            <Input
-              label="Descripción del plan"
-              placeholder="Ej: Rehabilitación completa de sector anterior..."
-              value={newPlan.description}
-              onChange={(e) => setNewPlan(prev => ({ ...prev, description: e.target.value }))}
-            />
-            <Input
-              label="Presupuesto estimado (opcional)"
-              type="number"
-              placeholder="0.00"
-              value={newPlan.budget}
-              onChange={(e) => setNewPlan(prev => ({ ...prev, budget: e.target.value }))}
-            />
-            <div className="border border-border-main p-3 rounded-xl bg-bg-main/30">
-              <label className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 block">Lista de Tareas / Procedimientos</label>
-              <div className="flex gap-2 mb-3">
-                <Input
-                  className="flex-1"
-                  placeholder="Ej: Extracción pieza 21"
-                  value={newTaskDesc}
-                  onChange={e => setNewTaskDesc(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      if (newTaskDesc.trim()) {
-                        setNewPlan(p => ({ ...p, tasks: [...p.tasks, { id: crypto.randomUUID(), desc: newTaskDesc, done: false }] }));
-                        setNewTaskDesc('');
-                      }
-                    }
-                  }}
-                />
-                <Button 
-                  type="button" 
-                  onClick={() => {
-                    if (newTaskDesc.trim()) {
-                      setNewPlan(p => ({ ...p, tasks: [...p.tasks, { id: crypto.randomUUID(), desc: newTaskDesc, done: false }] }));
-                      setNewTaskDesc('');
-                    }
-                  }}
-                  variant="secondary"
-                >Agregar</Button>
-              </div>
-              <ul className="space-y-2">
-                {newPlan.tasks.map(t => (
-                  <li key={t.id} className="flex justify-between items-center bg-bg-surface p-2 rounded border border-border-main text-sm">
-                    <span>{t.desc}</span>
-                    <button onClick={() => setNewPlan(p => ({ ...p, tasks: p.tasks.filter(x => x.id !== t.id) }))} className="text-red-500 hover:text-red-400"><X className="w-4 h-4"/></button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex justify-end gap-3 pt-4 border-t border-border-main">
-              <Button variant="ghost" onClick={() => setIsPlanModalOpen(false)}>Cancelar</Button>
-              <Button onClick={handleCreatePlan} icon={Save}>Guardar Plan</Button>
-            </div>
-          </div>
-      </Modal>
+      {id && (
+        <CreatePlanModal 
+          isOpen={isPlanModalOpen}
+          onClose={() => setIsPlanModalOpen(false)}
+          patientId={id}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['clinical', id, 'plans'] })}
+        />
+      )}
 
       {/* Header del Paciente */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-2">
@@ -381,62 +315,66 @@ export default function ClinicalRecord() {
           </div>
 
           {/* Toolbar de Herramientas del Odontograma */}
-          <div className="flex flex-wrap items-center gap-2 p-3 bg-bg-surface rounded-2xl border border-border-main shadow-sm w-full">
-            <span className="text-[10px] font-black text-text-muted uppercase tracking-widest mr-2 ml-1">Herramienta:</span>
+          <div className="flex flex-wrap items-center gap-2 p-3 bg-bg-surface/80 backdrop-blur-xl rounded-[1.5rem] border border-border-main shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] w-full">
+            <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mr-3 ml-2 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+              Instrumento:
+            </span>
             
             <button 
               onClick={() => setActiveTool(activeTool === 'CARIES' ? null : 'CARIES')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
-                activeTool === 'CARIES' ? 'bg-red-500/10 border-red-500 text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 'bg-bg-main border-border-main/50 text-text-muted hover:border-red-500/50'
+              className={`px-4 py-2 text-[11px] font-black uppercase tracking-wider rounded-xl border transition-all duration-300 ${
+                activeTool === 'CARIES' ? 'bg-red-500 text-white border-red-500 shadow-[0_4px_15px_rgba(239,68,68,0.4)] scale-105' : 'bg-transparent border-border-main/50 text-text-muted hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30'
               }`}
             >
               Caries
             </button>
             <button 
               onClick={() => setActiveTool(activeTool === 'REPAIR' ? null : 'REPAIR')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
-                activeTool === 'REPAIR' ? 'bg-blue-500/10 border-blue-500 text-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.2)]' : 'bg-bg-main border-border-main/50 text-text-muted hover:border-blue-500/50'
+              className={`px-4 py-2 text-[11px] font-black uppercase tracking-wider rounded-xl border transition-all duration-300 ${
+                activeTool === 'REPAIR' ? 'bg-blue-500 text-white border-blue-500 shadow-[0_4px_15px_rgba(59,130,246,0.4)] scale-105' : 'bg-transparent border-border-main/50 text-text-muted hover:bg-blue-500/10 hover:text-blue-500 hover:border-blue-500/30'
               }`}
             >
               Restauración
             </button>
             <button 
               onClick={() => setActiveTool(activeTool === 'SEALANT' ? null : 'SEALANT')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
-                activeTool === 'SEALANT' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.2)]' : 'bg-bg-main border-border-main/50 text-text-muted hover:border-emerald-500/50'
+              className={`px-4 py-2 text-[11px] font-black uppercase tracking-wider rounded-xl border transition-all duration-300 ${
+                activeTool === 'SEALANT' ? 'bg-emerald-500 text-white border-emerald-500 shadow-[0_4px_15px_rgba(16,185,129,0.4)] scale-105' : 'bg-transparent border-border-main/50 text-text-muted hover:bg-emerald-500/10 hover:text-emerald-500 hover:border-emerald-500/30'
               }`}
+              type="button"
             >
               Sellador
             </button>
             
-            <div className="w-px h-6 bg-border-main/50 mx-1" />
+            <div className="w-px h-6 bg-border-main mx-2" />
 
             <button 
               onClick={() => setActiveTool(activeTool === 'EXTRACTION' ? null : 'EXTRACTION')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
-                activeTool === 'EXTRACTION' ? 'bg-slate-500/10 border-slate-500 text-slate-500 shadow-[0_0_10px_rgba(100,116,139,0.2)]' : 'bg-bg-main border-border-main/50 text-text-muted hover:border-slate-500/50'
+              className={`px-4 py-2 text-[11px] font-black uppercase tracking-wider rounded-xl border transition-all duration-300 ${
+                activeTool === 'EXTRACTION' ? 'bg-slate-500 text-white border-slate-500 shadow-[0_4px_15px_rgba(100,116,139,0.4)] scale-105' : 'bg-transparent border-border-main/50 text-text-muted hover:bg-slate-500/10 hover:text-slate-500 hover:border-slate-500/30'
               }`}
             >
               Extracción
             </button>
             <button 
               onClick={() => setActiveTool(activeTool === 'CROWN' ? null : 'CROWN')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
-                activeTool === 'CROWN' ? 'bg-amber-500/10 border-amber-500 text-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'bg-bg-main border-border-main/50 text-text-muted hover:border-amber-500/50'
+              className={`px-4 py-2 text-[11px] font-black uppercase tracking-wider rounded-xl border transition-all duration-300 ${
+                activeTool === 'CROWN' ? 'bg-amber-500 text-white border-amber-500 shadow-[0_4px_15px_rgba(245,158,11,0.4)] scale-105' : 'bg-transparent border-border-main/50 text-text-muted hover:bg-amber-500/10 hover:text-amber-500 hover:border-amber-500/30'
               }`}
             >
               Corona
             </button>
             
-            <div className="w-px h-6 bg-border-main/50 mx-1 flex-1" />
+            <div className="w-px h-6 bg-border-main mx-2 flex-1" />
 
             <button 
               onClick={() => setActiveTool(activeTool === 'ERASE' ? null : 'ERASE')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg border flex items-center gap-1 transition-all ${
-                activeTool === 'ERASE' ? 'bg-text-main text-bg-main border-text-main shadow-[0_0_10px_rgba(255,255,255,0.2)]' : 'bg-bg-main border-border-main/50 text-text-muted hover:border-text-main/50'
+              className={`px-4 py-2 text-[11px] font-black uppercase tracking-wider rounded-xl border flex items-center gap-2 transition-all duration-300 ${
+                activeTool === 'ERASE' ? 'bg-text-main text-bg-main border-text-main shadow-[0_4px_15px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_15px_rgba(255,255,255,0.2)] scale-105' : 'bg-transparent border-border-main/50 text-text-muted hover:bg-text-main/10 hover:text-text-main hover:border-text-main/30'
               }`}
             >
-              <Eraser className="w-3.5 h-3.5" /> Borrador
+              <Eraser className="w-4 h-4" /> Borrador
             </button>
           </div>
 
@@ -446,25 +384,27 @@ export default function ClinicalRecord() {
             onFaceClick={handleFaceClick}
           />
 
-          <Card variant="inset" className="space-y-6">
+          <Card padding="none" className="p-6 md:p-8 space-y-8 bg-bg-surface border-border-main shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] rounded-[2rem]">
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                <div className="space-y-1">
-                 <h3 className="text-xl font-black text-text-main tracking-tight flex items-center gap-3">
-                   <FileText className="w-6 h-6 text-blue-500" />
-                   Nueva Evolución Médica
+                 <h3 className="text-2xl font-black text-text-main tracking-tighter flex items-center gap-3">
+                   <div className="p-2 bg-blue-500/10 rounded-xl text-blue-500">
+                     <FileText className="w-6 h-6" />
+                   </div>
+                   Nueva Evolución
                  </h3>
-                 <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest ml-9">Registro de sesión actual</p>
+                 <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] ml-[3.25rem]">Registro Clínico Oficial</p>
                </div>
                
                {/* Link a tratamiento: */}
-               <div className="flex items-center gap-2">
-                 <span className="text-[10px] uppercase font-bold text-text-muted">Vincular a:</span>
+               <div className="flex items-center gap-3 bg-bg-main px-4 py-2 rounded-xl border border-border-main">
+                 <span className="text-[9px] uppercase font-black text-text-muted tracking-widest">Asignar a Plan:</span>
                  <select 
                    value={selectedPlanId}
                    onChange={e => setSelectedPlanId(e.target.value)}
-                   className="bg-bg-main border border-border-main text-xs p-1.5 rounded-lg text-text-main focus:outline-none focus:border-blue-500"
+                   className="bg-transparent border-none text-xs font-bold p-0 pr-4 text-text-main focus:outline-none focus:ring-0 cursor-pointer"
                  >
-                   <option value="">(Ningún plan)</option>
+                   <option value="">(Registro suelto)</option>
                    {plans.filter(p => p.status === 'IN_PROGRESS').map(p => (
                      <option key={p.id} value={p.id}>{p.description.substring(0, 30)}...</option>
                    ))}
@@ -473,27 +413,32 @@ export default function ClinicalRecord() {
             </header>
 
             {/* Nexus Design Presets Section */}
-            <div className="space-y-3">
-               <p className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em] ml-2">Protocolos de Carga Rápida (Presets):</p>
+            <div className="space-y-4">
+               <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
+                 <span className="w-4 h-[1px] bg-border-main" /> Textos predefinidos
+               </p>
                <div className="flex flex-wrap gap-2">
                  {CLINICAL_PRESETS.map((p) => (
                    <button
                     key={p.label}
                     onClick={() => handleApplyPreset(p.text)}
-                    className="px-4 py-2 border border-border-main/50 rounded-xl bg-bg-surface hover:bg-blue-600 hover:text-white transition-all text-[10px] font-black uppercase tracking-wider shadow-sm group"
+                    className="px-5 py-2.5 bg-bg-main border border-border-main/50 hover:border-blue-500/50 rounded-xl hover:bg-blue-500 hover:text-white transition-all text-[11px] font-black uppercase tracking-wider shadow-sm hover:shadow-[0_4px_15px_rgba(59,130,246,0.3)] hover:-translate-y-0.5 active:translate-y-0 duration-200"
                    >
-                     {p.label}
+                     + {p.label}
                    </button>
                  ))}
                </div>
             </div>
 
-            <textarea 
-              value={newEvolution}
-              onChange={(e) => setNewEvolution(e.target.value)}
-              placeholder="Escribe el diagnóstico, procedimientos o notas de la sesión..."
-              className="w-full h-52 p-8 bg-bg-main/50 border border-border-main/50 rounded-[2.5rem] text-sm text-text-main focus:border-blue-500/50 focus:bg-bg-surface outline-none transition-all resize-none shadow-inner"
-            />
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-[2rem] blur opacity-0 group-focus-within:opacity-100 transition duration-500" />
+              <textarea 
+                value={newEvolution}
+                onChange={(e) => setNewEvolution(e.target.value)}
+                placeholder="Escribe el diagnóstico detallado, observaciones y/o el procedimiento realizado en esta sesión..."
+                className="relative w-full h-56 p-8 bg-bg-surface border border-border-main/80 rounded-[1.8rem] text-sm text-text-main focus:border-blue-500 focus:bg-bg-main outline-none transition-all resize-none shadow-inner leading-relaxed"
+              />
+            </div>
 
             {/* Uploaded Files Previews */}
             {uploadedFiles.length > 0 && (
@@ -555,148 +500,13 @@ export default function ClinicalRecord() {
               <p className="text-xs font-bold text-text-muted uppercase tracking-widest mt-1 opacity-60">seguimiento clínico</p>
            </header>
 
-           <div className="space-y-6 relative ml-4 border-l-2 border-border-main/30 pl-8 pb-10">
-              {activeTab === 'evoluciones' && history.map((evo) => (
-                <div key={evo.id} className="relative group">
-                  <div className="absolute -left-[45px] top-4 w-8 h-8 rounded-xl bg-bg-surface border border-border-main flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform shadow-xl">
-                    <Stethoscope className="w-4 h-4" />
-                  </div>
-                  <Card padding="sm" className="hover:border-blue-500/30 transition-all duration-300">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">
-                        {new Date(evo.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        <p className="text-[10px] font-black text-text-main uppercase tracking-tight">{evo.professional?.name || 'Profesional'}</p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-text-muted mt-2 leading-relaxed opacity-80">{evo.description}</p>
-                    {evo.attachments?.length > 0 && (
-                      <div className="mt-4 flex flex-wrap gap-2">
-                         {evo.attachments.map((att: any) => (
-                           <div key={att.id} className="relative group w-16 h-16 rounded-xl overflow-hidden cursor-pointer border border-border-main/50 hover:border-blue-500/50 transition-all">
-                              <img 
-                                src={`${API_BASE}${att.url}`} 
-                                alt="attachment" 
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                                onClick={() => window.open(`${API_BASE}${att.url}`, '_blank')}
-                              />
-                           </div>
-                         ))}
-                      </div>
-                    )}
-                  </Card>
-                </div>
-              ))}
-
-              {activeTab === 'planes' && plans.map((plan) => {
-                let parsedTasks: any[] = [];
-                try { parsedTasks = JSON.parse(plan.tasks || "[]"); } catch {}
-                
-                const toggleTask = async (taskId: string) => {
-                  const newTasks = parsedTasks.map(t => t.id === taskId ? { ...t, done: !t.done } : t);
-                  try {
-                    await api.put(`/clinical/plans/${plan.id}`, { tasks: JSON.stringify(newTasks) });
-                    fetchData();
-                  } catch(e) {}
-                };
-
-                const completedCount = parsedTasks.filter(t => t.done).length;
-                const progressPct = parsedTasks.length > 0 ? (completedCount / parsedTasks.length) * 100 : (plan.status === 'COMPLETED' ? 100 : 0);
-
-                return (
-                  <div key={plan.id} className="relative group">
-                    <div className="absolute -left-[45px] top-4 w-8 h-8 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform shadow-xl">
-                      <TrendingUp className="w-4 h-4" />
-                    </div>
-                    <Card padding="sm" className="hover:border-orange-500/30 transition-all duration-300">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="space-y-1">
-                          <button type="button" onClick={() => handleUpdatePlanStatus(plan.id, plan.status)} className="focus:outline-none rounded-full hover:scale-105 transition-transform">
-                            <Badge 
-                              variant={plan.status === 'COMPLETED' ? 'emerald' : plan.status === 'IN_PROGRESS' ? 'blue' : 'orange'} 
-                              size="xs"
-                              className="uppercase tracking-widest cursor-pointer"
-                            >
-                              {plan.status === 'COMPLETED' ? 'Finalizado' : plan.status === 'IN_PROGRESS' ? 'En Curso' : 'Pendiente'}
-                            </Badge>
-                          </button>
-                          <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest opacity-50 block mt-1">
-                            Iniciado {new Date(plan.createdAt).toLocaleDateString('es-ES')}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          {plan.budget && (
-                            <p className="text-sm font-black text-emerald-500">$ {plan.budget.toLocaleString()}</p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <p className="font-bold text-sm text-text-main mb-4">{plan.description}</p>
-
-                      {parsedTasks.length > 0 && (
-                         <div className="mb-4 space-y-2">
-                           {parsedTasks.map(t => (
-                             <div key={t.id} className="flex items-center gap-3">
-                                <input 
-                                  type="checkbox" 
-                                  checked={t.done} 
-                                  onChange={() => toggleTask(t.id)} 
-                                  className="w-4 h-4 rounded border-border-main text-blue-500 focus:ring-blue-500 bg-bg-surface cursor-pointer"
-                                />
-                                <span className={`text-xs ${t.done ? 'line-through text-text-muted opacity-50' : 'text-text-main'}`}>{t.desc}</span>
-                             </div>
-                           ))}
-                         </div>
-                      )}
-
-                      {/* Progress Bar visual indicator */}
-                      <div className="w-full bg-bg-main h-1.5 rounded-full overflow-hidden flex">
-                        <div 
-                          className={`h-full transition-all duration-1000 ${progressPct === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`}
-                          style={{ width: `${progressPct}%` }}
-                        />
-                      </div>
-                      {parsedTasks.length > 0 && (
-                        <p className="text-[9px] text-right mt-1 font-bold text-text-muted uppercase">{completedCount} / {parsedTasks.length} Tareas</p>
-                      )}
-                    </Card>
-                  </div>
-                );
-              })}
-
-              {activeTab === 'galeria' && (
-                <div className="grid grid-cols-2 gap-4">
-                  {history.flatMap(evo => evo.attachments || []).map((att: any) => (
-                    <Card key={att.id} padding="none" className="aspect-square relative group overflow-hidden cursor-pointer hover:border-blue-500/50 transition-all">
-                       <img 
-                        src={`${API_BASE}${att.url}`} 
-                        alt="Gallery" 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        onClick={() => window.open(`${API_BASE}${att.url}`, '_blank')}
-                       />
-                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                          <p className="text-[10px] font-black text-white uppercase tracking-widest">Ver Placa</p>
-                       </div>
-                    </Card>
-                  ))}
-                  {history.every(evo => !evo.attachments?.length) && (
-                    <Card variant="inset" className="col-span-2 aspect-square flex flex-col items-center justify-center text-center p-6 border-dashed border-2">
-                       <ImageIcon className="w-10 h-10 text-text-muted opacity-20 mb-4" />
-                       <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Sin Radiografías</p>
-                    </Card>
-                  )}
-                </div>
-              )}
-
-              {history.length === 0 && activeTab === 'evoluciones' && (
-                <div className="p-10 text-center space-y-4">
-                  <AlertCircle className="w-10 h-10 text-text-muted opacity-20 mx-auto" />
-                  <p className="text-xs font-bold text-text-muted">Aún no hay registros en la línea de tiempo.</p>
-                </div>
-              )}
-           </div>
+           <ClinicalTimeline 
+             activeTab={activeTab}
+             history={history}
+             plans={plans}
+             onPlanStatusUpdate={handleUpdatePlanStatus}
+             onPlanTaskToggle={handlePlanTaskToggle}
+           />
         </div>
       </div>
     </div>

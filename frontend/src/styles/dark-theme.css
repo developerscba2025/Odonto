@@ -1,18 +1,18 @@
 .dark {
-  /* Marca Predominante (Azul Login) */
-  --color-primary: #3b82f6;
-  --color-primary-hover: #60a5fa;
+  /* Marca Predominante (Celeste luminoso) */
+  --color-primary: #38bdf8; /* Sky 400 - Celeste */
+  --color-primary-hover: #7dd3fc; /* Sky 300 */
 
-  /* Fondos Azul Medianoche - AJUSTADOS PARA CONTRASTE */
-  --bg-main: #020617;     /* Slate 950 */
-  --bg-surface: #0f172a;  /* Slate 900 - Elevado para profundidad */
+  /* Fondos Azul Marino Profundo (Midnight Navy) */
+  --bg-main: #0a1128;     /* Azul marino muy oscuro / fondo general */
+  --bg-surface: #101c3d;  /* Azul marino elevado / tarjetas y modales */
   
   /* Textos */
-  --text-main: #f8fafc;   /* Slate 50 */
+  --text-main: #f8fafc;   /* Slate 50 - Blanco tiza */
   --text-muted: #94a3b8;  /* Slate 400 */
   
-  /* Bordes - Más definidos para el diseño de contenedor */
-  --border-main: #273548; 
+  /* Bordes - Celestes muy oscuros/translúcidos */
+  --border-main: #1e3a8a; /* Blue 900 */
 
   color-scheme: dark;
 }

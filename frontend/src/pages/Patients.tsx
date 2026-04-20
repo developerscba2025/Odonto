@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search as SearchIcon, Phone, Edit2, Archive, Plus, Users, ClipboardList } from 'lucide-react';
+import { Search as SearchIcon, Phone, Mail, Edit2, Archive, Plus, Users, ClipboardList, Copy, MessageCircle } from 'lucide-react';
 import api from '../lib/api';
 import CreatePatientModal from '../components/CreatePatientModal';
+import { useToast } from '../store/ToastContext';
 
 // UI Atoms
 import { Button } from '../components/ui/Button';
@@ -19,10 +20,12 @@ interface Patient {
   phone: string | null;
   email: string | null;
   obraSocial: string | null;
+  affiliateNum?: string | null;
   isDeleted: boolean;
 }
 
 export default function Patients() {
+  const { showToast } = useToast();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +71,20 @@ export default function Patients() {
     if (filterType === 'OBRA_SOCIAL') return !!p.obraSocial;
     return true;
   });
+
+  const handleCopyEmail = (e: React.MouseEvent, email: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigator.clipboard.writeText(email);
+    showToast('Correo copiado al portapapeles', 'success');
+  };
+
+  const handleWhatsApp = (e: React.MouseEvent, phone: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const cleanPhone = phone.replace(/\D/g, '');
+    window.open(`https://wa.me/${cleanPhone}`, '_blank');
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 w-full mx-auto pb-12">
@@ -169,22 +186,43 @@ export default function Patients() {
                 </Link>
 
                 {/* Info Pills */}
-                <div className="hidden md:flex items-center gap-10">
-                   <div className="w-40 shrink-0">
+                <div className="hidden xl:flex items-center gap-6 flex-1 justify-end mr-8">
+                   {/* Teléfono */}
+                   <div className="w-36 shrink-0 flex items-center justify-start gap-2">
+                      <Phone className="w-3 h-3 text-text-muted opacity-40" />
                       {patient.phone ? (
-                        <div className="flex items-center gap-2">
-                           <Phone className="w-3 h-3 text-text-muted opacity-40" />
-                           <span className="text-[11px] font-bold text-text-muted">{patient.phone}</span>
+                        <div className="flex items-center gap-2 group/phone cursor-pointer" onClick={(e) => handleWhatsApp(e, patient.phone!)}>
+                          <span className="text-[11px] font-bold text-text-muted truncate group-hover/phone:text-green-500 transition-colors" title={patient.phone}>{patient.phone}</span>
+                          <MessageCircle className="w-3 h-3 text-green-500 opacity-0 group-hover/phone:opacity-100 transition-opacity" />
                         </div>
                       ) : (
                         <span className="text-[10px] text-text-muted opacity-30 italic">Sin teléfono</span>
                       )}
                    </div>
+
+                   {/* Email */}
+                   <div className="w-48 shrink-0 flex items-center justify-start gap-2">
+                      <Mail className="w-3 h-3 text-text-muted opacity-40" />
+                      {patient.email ? (
+                        <div className="flex items-center gap-2 group/email cursor-pointer" onClick={(e) => handleCopyEmail(e, patient.email!)}>
+                          <span className="text-[11px] font-bold text-text-muted truncate group-hover/email:text-blue-500 transition-colors" title={patient.email}>{patient.email}</span>
+                          <Copy className="w-3 h-3 text-blue-500 opacity-0 group-hover/email:opacity-100 transition-opacity" />
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-text-muted opacity-30 italic">Sin correo</span>
+                      )}
+                   </div>
                    
-                   <div className="w-32 shrink-0">
-                     <Badge variant={patient.obraSocial ? 'blue' : 'slate'} size="xs" className="uppercase tracking-widest text-[8px]">
+                   {/* Obra Social */}
+                   <div className="w-32 shrink-0 flex flex-col items-end">
+                     <Badge variant={patient.obraSocial ? 'blue' : 'slate'} size="xs" className="uppercase tracking-widest text-[8px] w-full text-center mb-0.5">
                        {patient.obraSocial || 'Particular'}
                      </Badge>
+                     {patient.obraSocial && patient.affiliateNum && (
+                       <span className="text-[8px] font-bold text-text-muted opacity-60 uppercase tracking-widest truncate w-full text-center">
+                         Plan: {patient.affiliateNum}
+                       </span>
+                     )}
                    </div>
                 </div>
 
