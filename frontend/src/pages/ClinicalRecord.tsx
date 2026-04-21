@@ -25,6 +25,7 @@ export default function ClinicalRecord() {
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
 
+
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [activeColor, setActiveColor] = useState<'RED' | 'BLUE'>('RED');
 
@@ -130,6 +131,7 @@ export default function ClinicalRecord() {
         treatmentPlanId: selectedPlanId || undefined
       });
 
+
       queryClient.invalidateQueries({ queryKey: ['clinical', id] });
       showToast('Evolución médica registrada', 'success');
     } catch (error) {
@@ -165,6 +167,7 @@ export default function ClinicalRecord() {
       return api.put(`/clinical/plans/${planId}`, { tasks: JSON.stringify(newTasks) });
     },
     onSuccess: () => {
+
       queryClient.invalidateQueries({ queryKey: ['clinical', id, 'plans'] });
     },
     onError: () => {
@@ -189,6 +192,7 @@ export default function ClinicalRecord() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700 max-w-7xl mx-auto pb-16">
+
 
       {id && (
         <CreatePlanModal 

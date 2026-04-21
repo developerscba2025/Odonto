@@ -227,6 +227,7 @@ export default function Agenda() {
         initialData={selectedSlot}
       />
 
+
       {/* Page Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-2">
         <div className="space-y-1">
