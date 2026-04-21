@@ -1,18 +1,18 @@
 :root {
-  /* Marca Predominante (Azul Login) */
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
+  /* Marca Predominante (Celeste / Azul Marino) */
+  --color-primary: #0ea5e9; /* Sky 500 - Celeste vivo */
+  --color-primary-hover: #1e40af; /* Blue 800 - Azul Marino al hacer hover */
 
-  /* Fondos con tinte azulado sutil */
-  --bg-main: #f0f7ff; /* Muy claro con tinte azul */
-  --bg-surface: #ffffff;
+  /* Fondos con tinte celeste muy suave */
+  --bg-main: #f0f9ff; /* Sky 50 */
+  --bg-surface: #ffffff; /* Superficies limpias en blanco */
   
   /* Textos */
-  --text-main: #1e293b;
-  --text-muted: #64748b;
+  --text-main: #0f172a; /* Slate 900 - Azul muy oscuro */
+  --text-muted: #64748b; /* Slate 500 */
   
   /* Bordes */
-  --border-main: #dbeafe; /* Azul muy claro */
+  --border-main: #e0f2fe; /* Sky 100 - Borde celeste sutil */
 
   color-scheme: light;
 }

@@ -45,43 +45,50 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-main overflow-hidden flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans relative transition-colors duration-500">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 dark:bg-blue-600/5 rounded-full blur-[120px]"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 dark:bg-indigo-600/5 rounded-full blur-[120px]"></div>
+    <div className="min-h-screen bg-slate-950 overflow-hidden flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans relative transition-colors duration-700">
+      {/* Background Deep Space Gradient */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/30 via-slate-950 to-black pointer-events-none" />
       
-      <div className="relative sm:mx-auto sm:w-full sm:max-w-md">
+      {/* Background Decorative Elements */}
+      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-blue-600/20 rounded-full blur-[140px] animate-pulse pointer-events-none opacity-60"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-cyan-500/10 rounded-full blur-[140px] animate-pulse pointer-events-none opacity-60 flex items-center justify-center" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-[20%] left-[30%] w-[20%] h-[30%] bg-indigo-500/20 rounded-full blur-[100px] animate-pulse pointer-events-none opacity-40" style={{ animationDelay: '4s' }}></div>
+      
+      <div className="relative sm:mx-auto sm:w-full sm:max-w-md z-10">
         <div className="flex justify-center">
-          <div className="bg-blue-600 text-white p-3 rounded-2xl shadow-xl shadow-blue-500/30">
+          <div className="bg-gradient-to-br from-blue-400 to-cyan-500 text-white p-4 rounded-[1.2rem] shadow-2xl shadow-blue-500/40 ring-1 ring-white/30 backdrop-blur-sm">
             <Smile className="w-10 h-10" />
           </div>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-text-main tracking-tight">
-          DentalFlow
+        <h2 className="mt-8 text-center text-4xl font-black text-white tracking-tighter">
+          DentalFlow<span className="text-cyan-400">.</span>
         </h2>
-        <p className="mt-2 text-center text-sm text-text-muted">
-          Ingresa a la plataforma de gestión clínica
+        <p className="mt-2 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
+          Gestor Clínico Inteligente
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative">
-        <div className="bg-bg-surface/80 backdrop-blur-xl py-8 px-4 shadow-2xl shadow-slate-200 dark:shadow-none sm:rounded-3xl sm:px-10 border border-border-main">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="bg-white/5 backdrop-blur-2xl py-10 px-6 sm:px-10 shadow-2xl sm:rounded-[2rem] border border-white/10 relative overflow-hidden group">
+          {/* subtle interior shine */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none transition-opacity duration-500 group-hover:opacity-100 opacity-50" />
+          
+          <form className="space-y-7 relative" onSubmit={handleSubmit}>
             
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 text-sm">
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-medium backdrop-blur-md animate-in fade-in zoom-in-95">
                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
                 <p>{error}</p>
               </div>
             )}
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-text-main">
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="block text-[10px] font-black text-slate-300 uppercase tracking-widest pl-1">
                 Correo Electrónico
               </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-text-muted" />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-slate-400" />
                 </div>
                 <input
                   id="email"
@@ -91,19 +98,19 @@ export default function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-border-main rounded-xl py-3 border bg-bg-main text-text-main"
+                  className="block w-full pl-12 pr-4 py-4 text-sm font-medium text-white bg-slate-900/50 border border-white/10 rounded-2xl focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 focus:bg-slate-900 transition-all placeholder:text-slate-600 outline-none shadow-inner"
                   placeholder="doctor@dentalflow.com"
                 />
               </div>
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-text-main">
+            <div className="space-y-1.5">
+              <label htmlFor="password" className="block text-[10px] font-black text-slate-300 uppercase tracking-widest pl-1">
                 Contraseña
               </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-text-muted" />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-slate-400" />
                 </div>
                 <input
                   id="password"
@@ -113,17 +120,17 @@ export default function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-border-main rounded-xl py-3 border bg-bg-main text-text-main"
+                  className="block w-full pl-12 pr-4 py-4 text-sm font-medium text-white bg-slate-900/50 border border-white/10 rounded-2xl focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 focus:bg-slate-900 transition-all placeholder:text-slate-600 outline-none shadow-inner"
                   placeholder="••••••••"
                 />
               </div>
             </div>
 
-            <div>
+            <div className="pt-4">
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent rounded-2xl shadow-[0_0_20px_rgba(34,211,238,0.2)] text-[11px] font-black uppercase tracking-widest text-slate-900 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 focus:outline-none transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />

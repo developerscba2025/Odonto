@@ -14,9 +14,9 @@ export const Card = ({
 }: CardProps) => {
   
   const variants = {
-    surface: 'bg-bg-surface border border-border-main shadow-xl shadow-black/5',
-    glass: 'bg-black/20 backdrop-blur-xl border border-white/5 shadow-2xl',
-    inset: 'bg-black/10 border border-white/5 inset-shadow inner-shadow shadow-inner'
+    surface: 'bg-bg-surface/95 dark:bg-bg-surface/90 backdrop-blur-sm border border-border-main shadow-xl shadow-primary/5 hover:shadow-primary/10',
+    glass: 'bg-primary/5 dark:bg-white/5 backdrop-blur-md border border-primary/10 dark:border-white/10 shadow-2xl',
+    inset: 'bg-primary/5 dark:bg-black/20 border border-primary/20 dark:border-white/5 shadow-inner'
   };
 
   const paddings = {
